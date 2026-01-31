@@ -1,0 +1,81 @@
+data_import:
+  raw_data_relative_path:  data/raw
+  source_url: https://www.data.gouv.fr/api/1/datasets/r/
+  from_year: 2019
+  to_year: 2024
+  resources:
+    # --- Caractéristiques ---
+    - {"subgroup": "caracteristiques", "year": 2019, "resource_id": "e22ba475-45a3-46ac-a0f7-9ca9ed1e283a"}
+    - {"subgroup": "caracteristiques", "year": 2020, "resource_id": "07a88205-83c1-4123-a993-cba5331e8ae0"}
+    - {"subgroup": "caracteristiques", "year": 2021, "resource_id": "85cfdc0c-23e4-4674-9bcd-79a970d7269b"}
+    - {"subgroup": "caracteristiques", "year": 2022, "resource_id": "5fc299c0-4598-4c29-b74c-6a67b0cc27e7"}
+    - {"subgroup": "caracteristiques", "year": 2023, "resource_id": "104dbb32-704f-4e99-a71e-43563cb604f2"}
+    - {"subgroup": "caracteristiques", "year": 2024, "resource_id": "83f0fb0e-e0ef-47fe-93dd-9aaee851674a"}
+    # Lieux
+    - {"subgroup": "lieux", "year": 2019, "resource_id": "2ad65965-36a1-4452-9c08-61a6c874e3e6"}
+    - {"subgroup": "lieux", "year": 2020, "resource_id": "e85c41f7-d4ea-4faf-877f-ab69a620ce21"}
+    - {"subgroup": "lieux", "year": 2021, "resource_id": "8a4935aa-38cd-43af-bf10-0209d6d17434"}
+    - {"subgroup": "lieux", "year": 2022, "resource_id": "a6ef711a-1f03-44cb-921a-0ce8ec975995"}
+    - {"subgroup": "lieux", "year": 2023, "resource_id": "8bef19bf-a5e4-46b3-b5f9-a145da4686bc"}
+    - {"subgroup": "lieux", "year": 2024, "resource_id": "228b3cda-fdfb-4677-bd54-ab2107028d2d"}
+    # Usagers
+    - {"subgroup": "usagers", "year": 2019, "resource_id": "36b1b7b3-84b4-4901-9163-59ae8a9e3028"}
+    - {"subgroup": "usagers", "year": 2020, "resource_id": "78c45763-d170-4d51-a881-e3147802d7ee"}
+    - {"subgroup": "usagers", "year": 2021, "resource_id": "ba5a1956-7e82-41b7-a602-89d7dd484d7a"}
+    - {"subgroup": "usagers", "year": 2022, "resource_id": "62c20524-d442-46f5-bfd8-982c59763ec8"}
+    - {"subgroup": "usagers", "year": 2023, "resource_id": "68848e2a-28dd-4efc-9d5f-d512f7dbe66f"}
+    - {"subgroup": "usagers", "year": 2024, "resource_id": "f57b1f58-386d-4048-8f78-2ebe435df868"}
+    # Véhicules
+    - {"subgroup": "vehicules", "year": 2019, "resource_id": "780cd335-5048-4bd6-a841-105b44eb2667"}
+    - {"subgroup": "vehicules", "year": 2020, "resource_id": "a66be22f-c346-49af-b196-71df24702250"}
+    - {"subgroup": "vehicules", "year": 2021, "resource_id": "0bb5953a-25d8-46f8-8c25-b5c2f5ba905e"}
+    - {"subgroup": "vehicules", "year": 2022, "resource_id": "c9742921-4427-41e5-81bc-f13af8bc31a0"}
+    - {"subgroup": "vehicules", "year": 2023, "resource_id": "146a42f5-19f0-4b3e-a887-5cd8fbef057b"}
+    - {"subgroup": "vehicules", "year": 2024, "resource_id": "fd30513c-6b11-4a56-b6dc-5ac87728794b"}
+
+data_clean:
+  raw_data_relative_path:  data/raw
+  out_data_relative_path: data/processed
+  cluster_cat_vehicule:
+    0: [7]
+    1: [10, 32, 50, 37, 34, 14, 3, 80, 43, 17, 99, 38, 13, 0, 21, 60, 36, 40, 20, 39, 16, 35, 42, 41]
+    2: [33]
+    3: [1]
+    4: [30]
+    5: [15]
+    6: [2]
+    7: [31]
+
+
+data_merge:
+  input_data_relative_path:  data/processed
+  out_merged_data_relative_path: data/processed_merged
+  STATUS_FILE: data/status.txt
+
+data_encodage:
+  merged_data_path:  data/processed_merged/merged_data.csv
+  merged_data_encoded_path: data/processed_merged/merged_data_encoded.csv
+  encode_columns: ['senc','catr', 'circ', 'plan','situ','lum','agg','int','col','vosp','prof','surf','infra','atm']
+  STATUS_FILE: data/status.txt
+  
+data_transformation: 
+  input_path: data/processed_merged/merged_data_encoded.csv
+  train_test_path: data/train_test/
+  STATUS_FILE: data/status.txt
+
+# model_trainer:
+#   root_dir: models
+#   X_train_path: data/processed/X_train.csv
+#   X_test_path: data/processed/X_test.csv
+#   y_train_path: data/processed/y_train.csv
+#   y_test_path: data/processed/y_test.csv
+#   model_name: model.joblib
+
+# model_evaluation:
+#   root_dir: metrics
+#   X_test_path: data/processed/X_test.csv
+#   y_test_path: data/processed/y_test.csv
+#   model_path: models/model.joblib
+#   metric_file_name: metrics/metrics.json
+
+
