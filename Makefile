@@ -5,7 +5,11 @@ start-project:
 
 stop-project:
 	docker compose -p $(PROJECT_NAME) down
-PROJECT_NAME=accidents-mlops
+
+reset-project:
+	-docker compose down --remove-orphans
+	-docker rm -f nginx_revproxy
+	docker compose up --build -d
 
 logs:
 	docker compose -p $(PROJECT_NAME) logs -f

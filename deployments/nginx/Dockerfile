@@ -5,7 +5,7 @@ FROM nginx:1.25.2-alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copie des certificats SSL
-COPY certs /etc/nginx/certs
+COPY certs/ /etc/nginx/certs
 
 # Exposition des ports
 EXPOSE 80 443

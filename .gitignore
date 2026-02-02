@@ -16,3 +16,9 @@ api/deployments/nginx/certs/
 # ML models (artefacts)
 api/model/*.joblib
 api/model/*.pkl
+deployments/nginx/certs/nginx.crt
+.gitignore
+deployments/nginx/certs/nginx.key
+src/api/Dockerfile
+model/features.joblib
+model/random_forest_regressor.joblib

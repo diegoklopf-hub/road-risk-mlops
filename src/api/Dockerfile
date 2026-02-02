@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY src/api/main.py .
 
 # Copie du modèle (lecture seule côté API)
-COPY ../../model /model
+COPY model /model
 
 # Exposition du port interne
 EXPOSE 8000
