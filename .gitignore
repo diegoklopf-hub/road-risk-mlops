@@ -5,3 +5,14 @@ src/entity/__pycache__/
 pipeline.log
 logs/logs.log
 src/pipeline/logs/logs.log
+
+
+# Docker
+*.log
+
+# SSL certs
+api/deployments/nginx/certs/
+
+# ML models (artefacts)
+api/model/*.joblib
+api/model/*.pkl
