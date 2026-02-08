@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from src.custom_logger import logger
+from src.config_manager import ConfigurationManager
 from src.entity import DataTransformationConfig
 
 
@@ -28,6 +29,21 @@ class DataTransformation:
 
         X = data.drop(columns=["score_grav"])
         y = data["score_grav"]
+
+        # --- FIX CORSE: dep/com peuvent contenir "2A"/"2B" -> rendre numérique
+
+        # dep: "2A"/"2B" -> 20/21
+        if "dep" in X.columns:
+            X["dep"] = X["dep"].astype("string").replace({"2A": "20", "2B": "21"})
+            X["dep"] = pd.to_numeric(X["dep"], errors="coerce")
+
+        # com: peut valoir "2A271"/"2B120" -> "20271"/"21120" puis numérique
+        if "com" in X.columns:
+            X["com"] = X["com"].astype("string")
+            X["com"] = X["com"].str.replace(r"^2A", "20", regex=True)
+            X["com"] = X["com"].str.replace(r"^2B", "21", regex=True)
+            X["com"] = pd.to_numeric(X["com"], errors="coerce")
+
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -54,8 +70,10 @@ class DataTransformation:
         """
         print("""------------- 02 Normalizing features -------------""")
         # Get cols_to_normalize config
+        cm = ConfigurationManager()
+        schema_cols = cm.schema["COLUMNS"]
         cols_to_normalize = []
-        for col_name, properties in self.config.schema.items():
+        for col_name, properties in schema_cols.items():
             if properties.get("normalized") is True:
                 cols_to_normalize.append(col_name)
 
@@ -87,8 +105,11 @@ class DataTransformation:
         print("""------------- 03 Feature selection -------------""")
 
         # Build list of base columns configured to be used for prediction
+        cm = ConfigurationManager()
+        schema_cols = cm.schema["COLUMNS"]
+
         cols_used_for_prediction = []
-        for col_name, properties in self.config.schema.items():
+        for col_name, properties in schema_cols.items():
             if properties.get("use_for_fit") is True:
                 cols_used_for_prediction.append(col_name)
 
@@ -107,3 +128,5 @@ class DataTransformation:
         X_test.to_csv(os.path.join(self.config.train_test_path, "X_test_feature_selected.csv"), index = False)
         logger.info(f"X_train shape: {X_train.shape}")
         logger.info(f"X_test shape: {X_test.shape}")
+
+        

@@ -4,13 +4,12 @@ import pandas as pd
 from src.data_processing.check_structure import check_columns, check_schema
 from src.data_processing.engineering.aggregation_functions import agg_cat_unique_with_count, categorize_accident, categorize_gender, extract_normalize
 from src.data_processing.engineering.security import user_safety_score
-from src.entity import DataCleanConfig
+from src.entity import DataMergeConfig
 from src.custom_logger import logger
 
 
 def aggregate_accident_features(df,aggregate_features_ref,status_file):
     # --- Groupby principal ---
-
         aggregate_columns = {
             "age": ["mean", "min", "max"],
             "securite_usager": ["mean", "min"],
@@ -107,7 +106,7 @@ def aggregate_accident_features(df,aggregate_features_ref,status_file):
 
 
 class DataMerge:
-    def __init__(self, config: DataCleanConfig):
+    def __init__(self, config: DataMergeConfig):
         self.config = config
         self.df = None
         self.columns_not_aggregated = []
@@ -135,10 +134,11 @@ class DataMerge:
             os.makedirs(self.config.out_merged_data_relative_path)
         
         #Read cleaned data
-        caracteristiques = pd.read_csv(self.config.input_data_relative_path + '/caracteristiques.csv')
-        vehicules = pd.read_csv(self.config.input_data_relative_path + '/vehicules.csv')
-        usagers = pd.read_csv(self.config.input_data_relative_path + '/usagers.csv')
-        lieux = pd.read_csv(self.config.input_data_relative_path + '/lieux.csv') 
+        caracteristiques = pd.read_csv(self.config.input_data_relative_path / "caracteristiques.csv")
+        vehicules = pd.read_csv(self.config.input_data_relative_path / "vehicules.csv")
+        usagers = pd.read_csv(self.config.input_data_relative_path / "usagers.csv")
+        lieux = pd.read_csv(self.config.input_data_relative_path / "lieux.csv")
+
         
         # Initialize list of non-aggregated columns
         self.columns_not_aggregated = []
@@ -229,7 +229,7 @@ class DataMerge:
         self.columns_aggregated = [col for col in self.columns_aggregated if col != 'id_vehicule' and col != 'num_veh']
 
         # Aggregating data by accident
-        acc_agg = aggregate_accident_features(self.df,self.columns_aggregated,self.config.STATUS_FILE).reset_index()
+        acc_agg = aggregate_accident_features(self.df,self.columns_aggregated,self.config.status_file).reset_index()
         self.df = self.df.reset_index(drop=True)  
 
         # Final merge with not aggregated data
@@ -240,38 +240,36 @@ class DataMerge:
 
 
     def validate_data_and_export(self):
-        """
-        Validate the data structure against the configured schema and export the merged data.
-        This method performs schema validation on the current dataframe by checking all
-        columns against the expected schema defined in the configuration. If validation
-        succeeds, the dataframe is exported to a CSV file. If validation fails, an error
-        is raised.
-        Returns:
-            bool: True if the schema is valid and data is successfully exported,
-                  False otherwise.
-        """
-        print("""------------- 04 Validating data structure and export -------------""")
-        logger.info("Validate the data structure against the configured schema and export the merged data.")
-        # Verify columns
-        try:
 
-            all_cols = set(list(self.df.columns))
-        
-            is_shema_valid = check_schema(all_cols,self.config.all_schema,self.config.STATUS_FILE,"DATA MERGE",ignore_calib=True)
+        logger.info("04 - Validate & export")
 
-            if (is_shema_valid):
-                
-                # Export final file
-                output_file = os.path.join(self.config.out_merged_data_relative_path, "merged_data.csv")
-                self.df.to_csv(output_file, index=False)
-                print(f"Data exported to {output_file}")
+        schema = self.config.all_schema
 
-                logger.info('data structure validated successfully')
-            else:
-                #Exit with error
-                error_msg = f"Export failed: schema is not correct. Check {self.config.STATUS_FILE} for details."
-                raise ValueError(error_msg)
-            return is_shema_valid
-        
-        except Exception as e:
-            raise e
+        if "COLUMNS" not in schema:
+            raise ValueError("Schema must contain a COLUMNS section")
+
+        columns_schema = schema["COLUMNS"]
+        expected_cols = list(columns_schema.keys())
+
+        self.df = self.df.reindex(columns=expected_cols)
+
+        is_schema_valid = check_schema(
+            set(self.df.columns),
+            columns_schema,
+            self.config.status_file,
+            "DATA MERGE",
+            ignore_calib=True,
+        )
+
+
+        if not is_schema_valid:
+            raise ValueError("Schema validation failed")
+
+        output_file = os.path.join(
+            self.config.out_merged_data_relative_path,
+            "merged_data.csv",
+        )
+        self.df.to_csv(output_file, index=False)
+        logger.info(f"Exported to {output_file}")
+
+        return True

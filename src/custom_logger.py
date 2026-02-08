@@ -1,22 +1,18 @@
 import logging
-import os
+from pathlib import Path
 
-# Create logs directory if it doesn't exist
-logs_dir = "logs"
-if not os.path.exists(logs_dir):
-    os.makedirs(logs_dir)
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-# Create logs.log file if it doesn't exist
-log_file = os.path.join(logs_dir, "logs.log")
-if not os.path.exists(log_file):
-    open(log_file, 'a').close()
+log_file = LOG_DIR / "logs.log"
 
-# Configure logging
 logging.basicConfig(
-    filename=log_file,
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(),
+    ],
 )
 
-# Get a logger instance and expose it as part of the module
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)

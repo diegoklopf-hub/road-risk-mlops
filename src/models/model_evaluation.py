@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import mlflow
 import mlflow.sklearn
-import dagshub
 import joblib
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,7 +10,6 @@ from src.entity import ModelEvaluationConfig
 from src.common_utils import save_json
 
 
-dagshub.init(repo_owner='licence.pedago', repo_name='overview_mlops_wine_quality', mlflow=True)
 
 class ModelEvaluation:
     def __init__(self, config: ModelEvaluationConfig):
@@ -25,10 +23,13 @@ class ModelEvaluation:
     
     def log_into_mlflow(self):
         X_test = pd.read_csv(self.config.X_test_path)
-        y_test = pd.read_csv(self.config.y_test_path)
+        y_test = pd.read_csv(self.config.y_test_path).iloc[:, -1].astype(float)
         model = joblib.load(self.config.model_path)
 
-        mlflow.set_registry_uri(self.config.mlflow_uri)
+        mlflow_uri = getattr(self.config, "mlflow_uri", None)
+        if mlflow_uri:
+         mlflow.set_registry_uri(mlflow_uri)
+
         tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
         with mlflow.start_run():
@@ -40,7 +41,8 @@ class ModelEvaluation:
             scores = {"rmse": rmse, "mae": mae, "r2": r2}
             save_json(path=Path(self.config.metric_file_name), data=scores)
 
-            mlflow.log_params(self.config.all_params)
+            mlflow.log_params(getattr(self.config, "all_params", {}))
+
 
             mlflow.log_metric("rmse", rmse)
             mlflow.log_metric("mae", mae)

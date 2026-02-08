@@ -18,20 +18,20 @@ class DataImportPipeline:
         pass
 
     def main(self):
+        logger.info(f"CWD={Path.cwd()}")
         config = ConfigurationManager()
         data_import_config = config.get_data_import_config()
-        data_Import = DataImport(config = data_import_config)
-        data_Import.import_csv()
+        data_import = DataImport(config = data_import_config)
+        data_import.import_csv()
 
 if __name__ == '__main__':
     try:
         logger.info(f">>>>> stage {STAGE_NAME} started <<<<<")
-        obj = DataImportPipeline()
-        obj.main()
+        obj = DataImportPipeline().main()
         logger.info(f">>>>> stage {STAGE_NAME} completed <<<<<\n\nx=======x")
         
     except Exception as e:
         logger.exception(e)
         logger.error(f">>>>> stage {STAGE_NAME} failed <<<<<\n\nx=======x")
-        raise e
+        raise 
 

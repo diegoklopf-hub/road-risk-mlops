@@ -77,6 +77,14 @@ class DataImport:
         self.config = config
 
     def import_csv(self):
-        import_raw_data(self.config.raw_data_relative_path, self.config.from_year, self.config.to_year, self.config.csv_files, self.config.source_url)
-        logger.info(f'raw data set imported into {self.config.raw_data_relative_path}')
+        csv_files = getattr(self.config, "csv_files", None) or self.config.resources
+        import_raw_data(
+            self.config.raw_data_relative_path,
+            self.config.from_year,
+            self.config.to_year,
+            csv_files,
+            self.config.source_url,
+    )
+
+
                 

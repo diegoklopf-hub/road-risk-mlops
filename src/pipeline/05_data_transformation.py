@@ -1,6 +1,13 @@
 import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import sys
+from pathlib import Path
+
 # Add parent directory to path
 parent_folder = str(Path(__file__).parent.parent.parent)
 sys.path.append(parent_folder)
@@ -21,7 +28,7 @@ class DataTransformationTrainingPipeline:
             data_transformation_config = config.get_data_transformation_config()
 
 
-            with open(Path(data_transformation_config.STATUS_FILE), 'r') as f:
+            with open(Path(data_transformation_config.status_file), 'r') as f:
                 status = f.read().split(" ")[-1]
             
             if status == "True":
@@ -31,7 +38,7 @@ class DataTransformationTrainingPipeline:
                 X_train, X_test = data_transformation.normalize(X_train, X_test)
                 data_transformation.features_selection(X_train, X_test)
             else:
-                print()
+                print("Data transformation status is not valid.")
                 raise Exception("Your data schema is not valid")
         
         except Exception as e:

@@ -98,33 +98,36 @@ class DataClean:
         """
         print("""------------- 01 Starting data cleaning -------------""")
 
+        from_year = getattr(self.config, "from_year", 2019)
+        to_year = getattr(self.config, "to_year", 2024)
+
         # Ensure output directory exists
         if os.path.exists(self.config.out_data_relative_path) == False:
             os.makedirs(self.config.out_data_relative_path)
 
         # `caracteristiques` dataset (characteristics)
         print("Import 'caracteristiques' dataset...")
-        df_carac = read_csv(self.config.raw_data_relative_path, "caracteristiques", self.config.from_year, self.config.to_year)
+        df_carac = read_csv(self.config.raw_data_relative_path, "caracteristiques", from_year, to_year)
         logger.info("Cleaning 'caracteristiques' data...")
         df_carac = clean_characteristics(df_carac, self.config.out_data_relative_path)
         check_df(df_carac)
 
         # `lieux` dataset (locations)
         print("Import 'lieux' dataset...")
-        df_lieux = read_csv(self.config.raw_data_relative_path, "lieux", self.config.from_year, self.config.to_year)
+        df_lieux = read_csv(self.config.raw_data_relative_path, "lieux", from_year, to_year)
         logger.info("Cleaning 'lieux' data...")
         df_lieux = clean_lieux(df_lieux, self.config.out_data_relative_path)
         check_df(df_lieux)
 
         # `usagers` dataset (users)
         print("Import 'usagers' dataset...")
-        df_usagers = read_csv(self.config.raw_data_relative_path, "usagers", self.config.from_year, self.config.to_year)
+        df_usagers = read_csv(self.config.raw_data_relative_path, "usagers", from_year, to_year)
         logger.info("Cleaning 'usagers' data...")
         df_usagers = clean_usagers(df_usagers, self.config.out_data_relative_path)
 
         # `vehicules` dataset (vehicles)
         print("Import 'vehicules' dataset...")
-        df_vehicules = read_csv(self.config.raw_data_relative_path, "vehicules", self.config.from_year, self.config.to_year)
+        df_vehicules = read_csv(self.config.raw_data_relative_path, "vehicules", from_year, to_year)
         logger.info("Cleaning 'vehicules' data...")
         df_vehicules = clean_vehicles(df_vehicules, self.config.out_data_relative_path, self.config.cluster_cat_vehicule)
         check_df(df_vehicules)

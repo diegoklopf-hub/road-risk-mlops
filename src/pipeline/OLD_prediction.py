@@ -5,7 +5,7 @@ from pathlib import Path
 
 class PredictionPipeline:
     def __init__(self):
-        self.model = joblib.load(Path("models/model.joblib"))
+        self.model = joblib.load(Path("models/model_trainer.joblib"))
 
     def predict(self, data):
         prediction = self.model.predict(data)

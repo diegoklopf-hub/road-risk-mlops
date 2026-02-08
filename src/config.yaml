@@ -50,32 +50,35 @@ data_clean:
 data_merge:
   input_data_relative_path:  data/processed
   out_merged_data_relative_path: data/processed_merged
-  STATUS_FILE: data/status.txt
+  status_file: data/status.txt
 
 data_encodage:
   merged_data_path:  data/processed_merged/merged_data.csv
   merged_data_encoded_path: data/processed_merged/merged_data_encoded.csv
   encode_columns: ['senc','catr', 'circ', 'plan','situ','lum','agg','int','col','vosp','prof','surf','infra','atm']
-  STATUS_FILE: data/status.txt
+  status_file: data/status.txt
   
 data_transformation: 
   input_path: data/processed_merged/merged_data_encoded.csv
   train_test_path: data/train_test/
-  STATUS_FILE: data/status.txt
+  status_file: data/status.txt
 
-# model_trainer:
-#   root_dir: models
-#   X_train_path: data/processed/X_train.csv
-#   X_test_path: data/processed/X_test.csv
-#   y_train_path: data/processed/y_train.csv
-#   y_test_path: data/processed/y_test.csv
-#   model_name: model.joblib
 
-# model_evaluation:
-#   root_dir: metrics
-#   X_test_path: data/processed/X_test.csv
-#   y_test_path: data/processed/y_test.csv
-#   model_path: models/model.joblib
-#   metric_file_name: metrics/metrics.json
+model_trainer:
+  root_dir: models
+  X_train_path: data/train_test/X_train_feature_selected.csv
+  X_test_path:  data/train_test/X_test_feature_selected.csv
+  y_train_path: data/train_test/y_train.csv
+  y_test_path:  data/train_test/y_test.csv
+  sample_weight_train_path: data/train_test/sample_weight_train.csv
+  model_name: model.joblib
+
+model_evaluation:
+  root_dir: metrics
+  X_test_path: data/train_test/X_test_feature_selected.csv
+  y_test_path: data/train_test/y_test.csv
+  model_path: models/model.joblib
+  metric_file_name: metrics/metrics.json
+  mlflow_uri: mlruns
 
 

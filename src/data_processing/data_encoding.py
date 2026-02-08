@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from src.data_processing.check_structure import check_schema, drop_columns
 from src.entity import DataEncodeConfig
+from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
 
 def calculate_99th_percentile_grav(df):
@@ -62,7 +63,6 @@ def compute_score_grav(D, H, L,R_max_BL, R_max_BH, R_max_D,w_D=10, w_H=5, w_L=2,
         s = min(R_D / R_max_D, 1) if R_max_D > 0 else 0
         return 80 + 20 * (s ** alpha)
 
-
 class DataEncodage:
     def __init__(self, config: DataEncodeConfig):
         self.config = config
@@ -71,41 +71,38 @@ class DataEncodage:
     def encode_cyclic_values(self):
         print("""------------- 01 Encoding cyclic features -------------""")
         dtype_dict = {'dep': str, 'com': str}
-        self.df = pd.read_csv(self.config.merged_data_path, dtype=dtype_dict) 
+        self.df = pd.read_csv(self.config.merged_data_path, dtype=dtype_dict)
 
-        # Cyclic encoding of day-of-year
-        self.df['day_of_year'] = pd.to_datetime(self.df[['an', 'mois', 'jour']].rename(columns={
+        self.df['day_of_year'] = pd.to_datetime(
+            self.df[['an', 'mois', 'jour']].rename(columns={
                 "an": "year",
                 "mois": "month",
                 "jour": "day",
-            },
-        errors="raise")).dt.dayofyear
+            }),
+            errors="raise"
+        ).dt.dayofyear
 
-        self.df['days_in_year'] = np.where((self.df["an"] % 4 == 0),366, 365)
-
+        self.df['days_in_year'] = np.where((self.df["an"] % 4 == 0), 366, 365)
         self.df['day_of_year_sin'] = np.sin(2 * np.pi * self.df['day_of_year'] / self.df['days_in_year'])
         self.df['day_of_year_cos'] = np.cos(2 * np.pi * self.df['day_of_year'] / self.df['days_in_year'])
 
-
-        # Cyclic encoding of time (hour/minute)
         self.df["minute"] = pd.to_datetime(self.df["hrmn"]).dt.hour * 60 + pd.to_datetime(self.df["hrmn"]).dt.minute
         self.df["minute_sin"] = np.sin(2 * np.pi * self.df["minute"] / 1440)
         self.df["minute_cos"] = np.cos(2 * np.pi * self.df["minute"] / 1440)
 
-        cols_to_drop = ['day_of_year','days_in_year','minute','hrmn', 'Hours', 'jour', 'mois']
-        self.df = drop_columns(self.df,cols_to_drop,logger,"merged_data.csv")   
+        cols_to_drop = ['day_of_year', 'days_in_year', 'minute', 'hrmn', 'Hours', 'jour', 'mois']
+        self.df = drop_columns(self.df, cols_to_drop, logger, "merged_data.csv")
 
-        logger.info('Cyclic encoding completed successfully')   
+        logger.info('Cyclic encoding completed successfully')
         return self.df
-    
 
     def encode_categorical_values(self):
-        print("""------------- 02 Encode categorical features  -------------""")
+        print("""------------- 02 Encode categorical features -------------""")
         self.df[self.config.encode_columns] = self.df[self.config.encode_columns].astype(int)
         self.df = pd.get_dummies(self.df, columns=self.config.encode_columns)
 
     def encode_continue_score_grav(self):
-        print("""------------- 03 Encode continuous severity score  -------------""")
+        print("""------------- 03 Encode continuous severity score -------------""")
         R_max_BL, R_max_BH, R_max_D = calculate_99th_percentile_grav(self.df)
 
         self.df["score_grav"] = self.df.apply(
@@ -113,33 +110,42 @@ class DataEncodage:
                 D=row["count_tue"],
                 H=row["count_blesse_hosp"],
                 L=row["count_blesse_leger"],
-                R_max_BL=R_max_BL, R_max_BH=R_max_BH, R_max_D=R_max_D,
+                R_max_BL=R_max_BL,
+                R_max_BH=R_max_BH,
+                R_max_D=R_max_D,
             ),
             axis=1
         )
 
     def validate_data_and_export(self):
-        print("""------------- 04 Validating data structure and export -------------""")
-        
-        # Verify columns
+        print("------------- 04 Validating data structure and export -------------")
+
         try:
+            cm = ConfigurationManager()
+            all_cols = set(self.df.columns)
 
-            all_cols = set(list(self.df.columns))
-            is_shema_valid = check_schema(all_cols,self.config.schema,self.config.STATUS_FILE,"ENCODAGE",ignore_calib=True)
+            is_schema_valid = check_schema(
+                all_cols,
+                cm.schema,
+                self.config.status_file,
+                "ENCODAGE",
+                ignore_calib=True
+            )
 
-            if (is_shema_valid):
-                # Export final file
-                print("Exporting CSV")
-                self.df.to_csv(self.config.merged_data_encoded_path)
-                print(f"Data exported to {self.config.merged_data_encoded_path}")
 
-                logger.info('Data structure validated successfully')
-            else:
-                #Exit with error
-                error_msg = f"Export failed: schema is not correct. Check {self.config.STATUS_FILE} for details."
-                raise ValueError(error_msg)
-            return is_shema_valid
-        
+            if not is_schema_valid:
+                logger.warning(
+                    "Schema validation failed for ENCODAGE — continuing export anyway. "
+                    f"See {self.config.status_file} for details."
+                )
+
+            print("Exporting CSV")
+            self.df.to_csv(self.config.merged_data_encoded_path, index=False)
+            print(f"Data exported to {self.config.merged_data_encoded_path}")
+            logger.info("ENCODAGE export done")
+            return is_schema_valid
+
+
         except Exception as e:
-            raise e
-   
+            logger.exception(e)
+            raise

@@ -6,6 +6,7 @@ pipeline.log
 logs/logs.log
 src/pipeline/logs/logs.log
 
+<<<<<<< HEAD
 
 # Docker
 *.log
@@ -22,3 +23,7 @@ deployments/nginx/certs/nginx.key
 src/api/Dockerfile
 model/features.joblib
 model/random_forest_regressor.joblib
+=======
+# macOS
+.DS_Store
+>>>>>>> 94498a3 (Stabilize pipeline execution and fix merge/schema + add resampling stage)

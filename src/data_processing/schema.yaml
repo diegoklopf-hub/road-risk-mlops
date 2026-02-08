@@ -180,7 +180,7 @@ COLUMNS:
     type: int64
     description: "Place occupée dans le véhicule"
     values: {-1: "Non renseigné", 1: "Conducteur", 2: "Passager avant", 3: "Passager arrière droit", 4: "Passager arrière gauche", 5: "Passager arrière milieu", 10: "Piéton"}
-    normalized: 
+    normalized: False
     use_for_fit: True
   trajet:
     type: int64
@@ -324,10 +324,11 @@ ADDITIONAL_ENCODED_COLUMNS:
     use_for_fit: True
 
 REMOVE_ENCODED_COLUMNS:
-  hrmn:
-  Hours:
-  jour:
-  mois:
+  - hrmn
+  - jour
+  - mois
+  - Hours
+
 
 TARGET_COLUMN:
   name: grav

@@ -1,133 +1,162 @@
+from pathlib import Path
+from typing import Any, Dict, List, Union
+
 from src.config import CONFIG_FILE_PATH, SCHEMA_FILE_PATH, PARAMS_FILE_PATH
 from src.common_utils import create_directories, read_yaml
-from src.entity import DataImportConfig, DataCleanConfig, DataMergeConfig, DataEncodeConfig, DataTransformationConfig
+from src.entity import (
+    DataImportConfig,
+    DataCleanConfig,
+    DataMergeConfig,
+    DataEncodeConfig,
+    DataTransformationConfig,
+    ModelTrainerConfig,
+    ModelEvaluationConfig,
+)
 
+
+def _get(cfg: Any, key: str):
+    """
+    Permet d'accéder à une config YAML chargée soit en dict, soit en objet (Box/namespace).
+    """
+    if isinstance(cfg, dict):
+        return cfg[key]
+    return getattr(cfg, key)
+
+
+def _to_path(p: Union[str, Path]) -> Path:
+    return p if isinstance(p, Path) else Path(p)
+
+
+def _normalize_cluster_map(cluster_map: Dict[Any, List[int]]) -> Dict[int, List[int]]:
+    """
+    YAML peut parser les clés numériques en str selon le loader.
+    On force int pour coller à Dict[int, List[int]].
+    """
+    out: Dict[int, List[int]] = {}
+    for k, v in cluster_map.items():
+        out[int(k)] = list(v)
+    return out
 
 
 class ConfigurationManager:
     def __init__(
         self,
-        config_filepath = CONFIG_FILE_PATH,
-        params_filepath = PARAMS_FILE_PATH,
-        schema_filepath = SCHEMA_FILE_PATH):
-            self.config = read_yaml(config_filepath)
-            self.params = read_yaml(params_filepath)
-            self.schema = read_yaml(schema_filepath)
+        config_filepath=CONFIG_FILE_PATH,
+        params_filepath=PARAMS_FILE_PATH,
+        schema_filepath=SCHEMA_FILE_PATH,
+    ):
+        self.config = read_yaml(config_filepath)
+        self.params = read_yaml(params_filepath)
+        self.schema = read_yaml(schema_filepath)
 
-            
+    # ---------------- DATA ---------------- #
+
     def get_data_import_config(self) -> DataImportConfig:
-          config = self.config.data_import
+        cfg = _get(self.config, "data_import")
 
-          data_import_config = DataImportConfig(
-            raw_data_relative_path=config.raw_data_relative_path,
-            from_year=config.from_year,
-            to_year=config.to_year,
-            csv_files=config.resources,
-            source_url=config.source_url
-          )
-
-          return data_import_config
+        return DataImportConfig(
+            raw_data_relative_path=_to_path(_get(cfg, "raw_data_relative_path")),
+            source_url=_get(cfg, "source_url"),
+            from_year=int(_get(cfg, "from_year")),
+            to_year=int(_get(cfg, "to_year")),
+            resources=list(_get(cfg, "resources")),
+        )
 
     def get_data_clean_config(self) -> DataCleanConfig:
-          configImport = self.config.data_import
-          config = self.config.data_clean
+        cfg = _get(self.config, "data_clean")
 
-          data_clean_config = DataCleanConfig(
-            raw_data_relative_path=config.raw_data_relative_path,
-            out_data_relative_path=config.out_data_relative_path,
-            from_year=configImport.from_year,
-            to_year=configImport.to_year,
-            cluster_cat_vehicule=config.cluster_cat_vehicule
-          )
+        cluster = _get(cfg, "cluster_cat_vehicule")
+        cluster = _normalize_cluster_map(cluster)
 
-          return data_clean_config
-    
+        return DataCleanConfig(
+            raw_data_relative_path=_to_path(_get(cfg, "raw_data_relative_path")),
+            out_data_relative_path=_to_path(_get(cfg, "out_data_relative_path")),
+            cluster_cat_vehicule=cluster,
+        )
+
     def get_data_merge_config(self) -> DataMergeConfig:
-          config = self.config.data_merge
-          schema = self.schema.COLUMNS
+        cfg = _get(self.config, "data_merge")
 
-          data_merge_config = DataMergeConfig(
-            input_data_relative_path=config.input_data_relative_path,
-            out_merged_data_relative_path=config.out_merged_data_relative_path,
-            all_schema = schema,
-            STATUS_FILE=config.STATUS_FILE
-          )
+        status_file = (
+            _get(cfg, "status_file")
+            if ((isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file"))
+            else _get(cfg, "STATUS_FILE")
+        )
+        schema_columns = _get(self.schema, "COLUMNS")
 
-          return data_merge_config
+        return DataMergeConfig(
+            input_data_relative_path=_to_path(_get(cfg, "input_data_relative_path")),
+            out_merged_data_relative_path=_to_path(_get(cfg, "out_merged_data_relative_path")),
+            status_file=_to_path(status_file),
+            all_schema=self.schema,
+        )
     
-    def get_data_encodage_config(self):
-          config = self.config.data_encodage
-          schema_origin = self.schema.COLUMNS
-          additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
-          remove_col = self.schema.REMOVE_ENCODED_COLUMNS
-          schema = {**schema_origin, **additional_schema}
-          for col in remove_col:
-                schema.pop(col, None)
 
-          data_encodage_config = DataEncodeConfig(
-              merged_data_path=config.merged_data_path,
-              merged_data_encoded_path=config.merged_data_encoded_path,
-              encode_columns=config.encode_columns,
-              schema = schema,
-              STATUS_FILE=config.STATUS_FILE
-          )
 
-          return data_encodage_config
-    
+
+    def get_data_encodage_config(self) -> DataEncodeConfig:
+        cfg = _get(self.config, "data_encodage")
+
+        status_file = (_get(cfg, "status_file") if ((isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file")) else _get(cfg, "STATUS_FILE"))
+
+        return DataEncodeConfig(
+            merged_data_path=_to_path(_get(cfg, "merged_data_path")),
+            merged_data_encoded_path=_to_path(_get(cfg, "merged_data_encoded_path")),
+            encode_columns=list(_get(cfg, "encode_columns")),
+            status_file=_to_path(status_file),
+        )
 
     def get_data_transformation_config(self) -> DataTransformationConfig:
-          config = self.config.data_transformation
-          schema_origin = self.schema.COLUMNS
-          additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
-          remove_col = self.schema.REMOVE_ENCODED_COLUMNS
-          schema = {**schema_origin, **additional_schema}
-          for col in remove_col:
-                schema.pop(col, None)
+        cfg = _get(self.config, "data_transformation")
 
-          create_directories([config.train_test_path])
+        status_file = _get(cfg, "status_file") if (isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file") else _get(cfg, "STATUS_FILE")
 
-          data_transformation_config = DataTransformationConfig(
-                input_path = config.input_path,
-                train_test_path = config.train_test_path,
-                schema = schema,
-                STATUS_FILE = config.STATUS_FILE
-          )
+        train_test_path = _to_path(_get(cfg, "train_test_path"))
+        create_directories([train_test_path])
 
-          return data_transformation_config
-    
-#     def get_model_trainer_config(self) -> ModelTrainerConfig:
-#           config = self.config.model_trainer
-#           params = self.params.ElasticNet
-          
-#           create_directories([config.root_dir])
+        return DataTransformationConfig(
+            input_path=_to_path(_get(cfg, "input_path")),
+            train_test_path=train_test_path,
+            status_file=_to_path(status_file),
+        )
 
-#           model_trainer_config = ModelTrainerConfig(
-#                 root_dir = config.root_dir,
-#                 X_train_path = config.X_train_path,
-#                 y_train_path = config.y_train_path,
-#                 X_test_path = config.X_test_path,
-#                 y_test_path = config.y_test_path,
-#                 model_name = config.model_name,
-#                 alpha = params.alpha,
-#                 l1_ratio = params.l1_ratio
-#           )
+    # ---------------- MODEL ---------------- #
 
-#           return model_trainer_config
-    
-#     def get_model_evaluation_config(self) -> ModelEvaluationConfig:
-#           config = self.config.model_evaluation
-#           params = self.params.ElasticNet
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
+        cfg = _get(self.config, "model_trainer")
 
-#           create_directories([config.root_dir])
-          
-#           model_evaluation_config = ModelEvaluationConfig(
-#                 root_dir=config.root_dir,
-#                 X_test_path = config.X_test_path,
-#                 y_test_path = config.y_test_path,
-#                 model_path=config.model_path,
-#                 metric_file_name=config.metric_file_name,
-#                 all_params=params,
-#                 mlflow_uri="https://dagshub.com/licence.pedago/overview_mlops_wine_quality.mlflow",
-#           )
+        root_dir = _to_path(_get(cfg, "root_dir"))
+        create_directories([root_dir])
 
-#           return model_evaluation_config
+        # sample_weight optionnel
+        sw_raw = None
+        if (isinstance(cfg, dict) and "sample_weight_train_path" in cfg) or hasattr(cfg, "sample_weight_train_path"):
+            sw_raw = _get(cfg, "sample_weight_train_path")
+
+        sw_path = _to_path(sw_raw) if sw_raw else None
+
+        return ModelTrainerConfig(
+            root_dir=root_dir,
+            X_train_path=_to_path(_get(cfg, "X_train_path")),
+            X_test_path=_to_path(_get(cfg, "X_test_path")),
+            y_train_path=_to_path(_get(cfg, "y_train_path")),
+            y_test_path=_to_path(_get(cfg, "y_test_path")),
+            sample_weight_train_path=sw_path,
+            model_name=_get(cfg, "model_name"),
+        )
+
+
+    def get_model_evaluation_config(self) -> ModelEvaluationConfig:
+        cfg = _get(self.config, "model_evaluation")
+
+        root_dir = _to_path(_get(cfg, "root_dir"))
+        create_directories([root_dir])
+
+        return ModelEvaluationConfig(
+            root_dir=root_dir,
+            X_test_path=_to_path(_get(cfg, "X_test_path")),
+            y_test_path=_to_path(_get(cfg, "y_test_path")),
+            model_path=_to_path(_get(cfg, "model_path")),
+            metric_file_name=_to_path(_get(cfg, "metric_file_name")),
+            mlflow_uri=_get(cfg, "mlflow_uri"),
+        )

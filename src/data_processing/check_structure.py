@@ -30,8 +30,25 @@ def check_existing_folder(folder_path):
     else:
         return False
     
-def check_schema(columns_list, schema, status_file, phase,ignore_calib=False):
-    return check_columns(columns_list, schema.keys(), status_file, phase,ignore_calib)
+def check_schema(columns_list, schema, status_file, phase, ignore_calib=False):
+    """
+    schema.yaml format:
+      COLUMNS: {col_name: {type: ..., ...}, ...}
+      ADDITIONAL_ENCODED_COLUMNS: [colA, colB, ...]
+      REMOVE_ENCODED_COLUMNS: [colX, colY, ...]
+    """
+    if isinstance(schema, dict) and "COLUMNS" in schema:
+        base = set(schema["COLUMNS"].keys())
+        add = set(schema.get("ADDITIONAL_ENCODED_COLUMNS", []) or [])
+        rm = set(schema.get("REMOVE_ENCODED_COLUMNS", []) or [])
+        expected = list((base | add) - rm)
+    else:
+        # fallback: schema est déjà une liste/ensemble de colonnes attendues
+        expected = list(schema)
+
+    return check_columns(columns_list, expected, status_file, phase, ignore_calib)
+
+
     
 def check_columns(columns_list, expected_cols_list, status_file, phase,ignore_calib=False):
     """

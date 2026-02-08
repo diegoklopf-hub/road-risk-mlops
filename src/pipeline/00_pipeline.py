@@ -1,26 +1,29 @@
-import os
-from pathlib import Path
 import sys
+import subprocess
+from pathlib import Path
 
-# Add parent directory to path
-project_root = str(Path(__file__).resolve().parents[2])
-if project_root not in sys.path:
-    sys.path.append(project_root)
+# Trouve la racine du projet (le dossier qui contient "src/")
+PROJECT_ROOT = Path(__file__).resolve()
+while not (PROJECT_ROOT / "src").exists() and PROJECT_ROOT.parent != PROJECT_ROOT:
+    PROJECT_ROOT = PROJECT_ROOT.parent
 
-# Liste de tes fichiers dans l'ordre d'exécution
-scripts = [
-    r".\src\pipeline\01_data_import.py",
-    r".\src\pipeline\02_data_clean.py",
-    r".\src\pipeline\03_merge.py",
-    r".\src\pipeline\04_encodage.py",
-    r".\src\pipeline\05_data_transformation.py"
+modules = [
+    "src.pipeline.01_data_import",
+    "src.pipeline.02_data_clean",
+    "src.pipeline.03_merge",
+    "src.pipeline.04_encodage",
+    "src.pipeline.05_data_transformation",
 ]
 
-for script in scripts:
-    print(f"--- Exécution de {script} ---")
-    exit_code = os.system(f"python {script}")
-    
-    # Si un script échoue (code différent de 0), on arrête tout
-    if exit_code != 0:
-        print(f"Erreur lors de l'exécution de {script}. Arrêt du processus.")
-        break
+print("RUNNING:", __file__)
+print("PROJECT_ROOT =", PROJECT_ROOT)
+print("Python used  =", sys.executable)
+
+for mod in modules:
+    print(f"\n--- Exécution du module {mod} ---")
+    subprocess.run(
+        [sys.executable, "-m", mod],
+        cwd=str(PROJECT_ROOT),
+        check=True,
+    )
+    print(f"✅ {mod} exécuté avec succès.")
