@@ -4,9 +4,11 @@ FROM python:3.10-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 # Force l'affichage immédiat des logs
 ENV PYTHONUNBUFFERED=1
+ENV IS_DOCKER=true
 
 # Dossier de travail dans le conteneur
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 # Installation des dépendances système minimales
 RUN apt-get update \
@@ -20,7 +22,12 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copie du code de l'API
-COPY src/api/main.py .
+COPY src/api/*.py ./
+
+COPY src/__init__.py /app/src/__init__.py
+COPY src/common_utils.py /app/src/common_utils.py
+COPY src/custom_logger.py /app/src/custom_logger.py
+COPY src/config.yaml /app/src/config.yaml
 
 # Copie du modèle (lecture seule côté API)
 COPY model /model

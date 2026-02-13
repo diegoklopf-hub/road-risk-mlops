@@ -23,26 +23,23 @@ class DataTransformationTrainingPipeline:
         pass
 
     def main(self):
-        try:
-            config = ConfigurationManager()
-            data_transformation_config = config.get_data_transformation_config()
+        config = ConfigurationManager()
+        data_transformation_config = config.get_data_transformation_config()
 
 
-            with open(Path(data_transformation_config.status_file), 'r') as f:
-                status = f.read().split(" ")[-1]
-            
-            if status == "True":
-               
-                data_transformation = DataTransformation(config = data_transformation_config)
-                X_train, X_test, _, _ = data_transformation.train_test_splitting()
-                X_train, X_test = data_transformation.normalize(X_train, X_test)
-                data_transformation.features_selection(X_train, X_test)
-            else:
-                print("Data transformation status is not valid.")
-                raise Exception("Your data schema is not valid")
+        with open(Path(data_transformation_config.status_file), 'r') as f:
+            status = f.read().split(" ")[-1]
         
-        except Exception as e:
-            print(e)
+        if status == "True":
+            
+            data_transformation = DataTransformation(config = data_transformation_config)
+            X_train, X_test, _, _ = data_transformation.train_test_splitting()
+            X_train, X_test = data_transformation.normalize(X_train, X_test)
+            data_transformation.features_selection(X_train, X_test)
+        else:
+            print("Data transformation status is not valid.")
+            raise Exception("Your data schema is not valid")
+        
 
 if __name__ == '__main__':
     try:

@@ -17,3 +17,12 @@ logs:
 status:
 	docker compose -p $(PROJECT_NAME) ps
 
+test:
+	pytest -v -s tests/test_api.py 
+
+test-debug:
+	pytest -v tests/test_api.py 
+
+pipeline:
+	python src/pipeline/00_pipeline.py
+

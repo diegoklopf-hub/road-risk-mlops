@@ -1,7 +1,6 @@
 import os
-import logging
 import pandas as pd
-from src.data_processing.check_structure import check_columns, check_schema
+from src.data_processing.schema_manager import check_columns, SchemaManager
 from src.data_processing.engineering.aggregation_functions import agg_cat_unique_with_count, categorize_accident, categorize_gender, extract_normalize
 from src.data_processing.engineering.security import user_safety_score
 from src.entity import DataMergeConfig
@@ -31,10 +30,8 @@ def aggregate_accident_features(df,aggregate_features_ref,status_file):
         # --- Verify columns ---
         is_shema_valid = check_columns(aggregate_columns.keys(),aggregate_features_ref,status_file,"AGGREGATE")
 
-        if (is_shema_valid)== False:
-            error_msg = f"Export failed: Verification of columns to aggregate FAILED"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        if not is_shema_valid:
+                raise ValueError(f"Schema validation failed: See {status_file} for details.")
 
         print("Grouping dataframe by Num_Acc...")
         acc_agg = df.groupby("Num_Acc").agg(aggregate_columns)
@@ -242,34 +239,23 @@ class DataMerge:
     def validate_data_and_export(self):
 
         logger.info("04 - Validate & export")
-
         schema = self.config.all_schema
 
-        if "COLUMNS" not in schema:
-            raise ValueError("Schema must contain a COLUMNS section")
-
-        columns_schema = schema["COLUMNS"]
-        expected_cols = list(columns_schema.keys())
-
-        self.df = self.df.reindex(columns=expected_cols)
-
-        is_schema_valid = check_schema(
+        is_schema_valid = SchemaManager(schema).check_schema(
             set(self.df.columns),
-            columns_schema,
             self.config.status_file,
             "DATA MERGE",
             ignore_calib=True,
         )
 
-
         if not is_schema_valid:
-            raise ValueError("Schema validation failed")
+                raise ValueError(f"Schema validation failed: See {self.config.status_file} for details.")
+        else:
+            output_file = os.path.join(
+                self.config.out_merged_data_relative_path,
+                "merged_data.csv",
+            )
+            self.df.to_csv(output_file, index=False)
+            logger.info(f"Exported to {output_file}")
 
-        output_file = os.path.join(
-            self.config.out_merged_data_relative_path,
-            "merged_data.csv",
-        )
-        self.df.to_csv(output_file, index=False)
-        logger.info(f"Exported to {output_file}")
-
-        return True
+            return True

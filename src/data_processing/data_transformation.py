@@ -4,7 +4,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from src.custom_logger import logger
-from src.config_manager import ConfigurationManager
 from src.entity import DataTransformationConfig
 
 
@@ -48,8 +47,8 @@ class DataTransformation:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # X_train.to_csv(os.path.join(self.config.train_test_path, "X_train.csv"), index = False)
-        # y_train.to_csv(os.path.join(self.config.train_test_path, "y_train.csv"), index = False)
-        X_test.to_csv(os.path.join(self.config.train_test_path, "X_test.csv"), index = False)
+        y_train.to_csv(os.path.join(self.config.train_test_path, "y_train.csv"), index = False)
+        # X_test.to_csv(os.path.join(self.config.train_test_path, "X_test.csv"), index = False)
         y_test.to_csv(os.path.join(self.config.train_test_path, "y_test.csv"), index = False)
 
         logger.info("Split data into training and test sets")
@@ -65,24 +64,22 @@ class DataTransformation:
         """Normalize configured numeric features using MinMaxScaler.
 
         Only columns marked `normalized` in the `schema` are scaled. The
-        function matches expanded column names (dummy encodings) back to the
+        function matches expanded column names (OneHotEncoder) back to the
         base column name using regex before applying scaling.
         """
         print("""------------- 02 Normalizing features -------------""")
-        # Get cols_to_normalize config
-        cm = ConfigurationManager()
-        schema_cols = cm.schema["COLUMNS"]
-        cols_to_normalize = []
-        for col_name, properties in schema_cols.items():
-            if properties.get("normalized") is True:
-                cols_to_normalize.append(col_name)
+        # Get cols_to_normalize config  
+        cols_used_for_prediction = []
+        for col_name, properties in self.config.schema.items():
+            if properties.get("use_for_fit") is True:
+                cols_used_for_prediction.append(col_name)
 
         # Get columns from X_test (matching name)
         X_cols_to_normalize = []
         for X_col_name in X_train.columns:
             short_name = re.sub(r'_-?\d+$', '', X_col_name)
             short_name = re.sub(r'_(A|B)$', '', short_name) 
-            if short_name in cols_to_normalize:
+            if short_name in cols_used_for_prediction:
                 X_cols_to_normalize.append(X_col_name)
 
 
@@ -105,11 +102,8 @@ class DataTransformation:
         print("""------------- 03 Feature selection -------------""")
 
         # Build list of base columns configured to be used for prediction
-        cm = ConfigurationManager()
-        schema_cols = cm.schema["COLUMNS"]
-
         cols_used_for_prediction = []
-        for col_name, properties in schema_cols.items():
+        for col_name, properties in self.config.schema.items():
             if properties.get("use_for_fit") is True:
                 cols_used_for_prediction.append(col_name)
 

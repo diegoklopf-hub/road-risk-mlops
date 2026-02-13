@@ -60,6 +60,51 @@ Vérifier les logs :
 cat logs/logs.log
 ```
 
+## API S.A.V.E.R. (saver_app)
+
+L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l'API de prédiction V2.
+
+### Endpoints utilisés par l'app
+
+**GET /**
+- Sert l'interface S.A.V.E.R. (`saver_app.html`).
+
+**GET /api/v1/health**
+- Healthcheck de l'API.
+- Réponse exemple :
+```json
+{
+  "status": "ok",
+  "model_loaded": true,
+  "n_features": 123
+}
+```
+
+**POST /api/v2/predict**
+- Endpoint principal appelé par l'interface.
+- Body JSON :
+```json
+{
+  "cities": ["Bassens", "Sainte-Eulalie"],
+  "timestamp": "2026-02-10T22:00:00Z"
+}
+```
+- Réponse exemple :
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "commune": "Bassens",
+      "adresse": "avenue de la république",
+      "facteurs": "...",
+      "prediction": 61.2345,
+      "stabilite": "➡️ Stable"
+    }
+  ]
+}
+```
+
 ## Structure du Projet
 
 ```

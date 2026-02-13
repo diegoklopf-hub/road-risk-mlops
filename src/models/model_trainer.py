@@ -11,6 +11,10 @@ from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
 from src.entity import ModelTrainerConfig

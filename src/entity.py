@@ -44,7 +44,10 @@ class DataEncodeConfig:
     merged_data_path: Path
     merged_data_encoded_path: Path
     encode_columns: List[str]
+    model_one_hot_encoder_path: Path
+    schema: Dict[str, Any]
     status_file: Path
+    schema: Dict[str, Any]
 
 # =========================
 # DATA TRANSFORMATION
@@ -55,6 +58,7 @@ class DataTransformationConfig:
     input_path: Path
     train_test_path: Path
     status_file: Path
+    schema: Dict[str, Any]
 
 # =========================
 # MODEL TRAINER

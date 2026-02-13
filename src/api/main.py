@@ -1,24 +1,45 @@
+import datetime
+from pathlib import Path
 import os
+
 import joblib
-import numpy as np
 import pandas as pd
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, List
 
+from inference_engine import model_prediction, timeline_prediction
+from src.common_utils import read_yaml
+from src.custom_logger import logger
+
+from datetime import datetime, timezone
+
+from inference_engine import model_prediction
+from src.common_utils import read_yaml
 
 # -------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "../../model/random_forest_regressor.joblib")
-FEATURES_PATH = os.path.join(BASE_DIR, "../../model/features.joblib")
+def is_docker():
+    return Path('/.dockerenv').exists() or os.getenv('DOCKER_CONTAINER') == 'true'
+path_prefix = "" if is_docker() else "."
 
+CONFIG = read_yaml(Path("src/config.yaml"))
+API_CFG = CONFIG.api_inference
+
+MODEL_PATH = Path(path_prefix+API_CFG.model_path)
+FEATURES_PATH = Path(path_prefix+API_CFG.features_path)
+TEMPLATE_PATH = Path(path_prefix+API_CFG.template_path)
+
+# City list and INSEE mapping
+secteur = API_CFG.secteur_insee
+data = list(secteur.keys())
 
 # -------------------------------------------------------------------
-# Chargement du modèle et des features
+# Load the model and feature list
 # -------------------------------------------------------------------
 
 try:
@@ -33,7 +54,7 @@ except Exception as e:
 
 
 # -------------------------------------------------------------------
-# Initialisation FastAPI
+# FastAPI initialization
 # -------------------------------------------------------------------
 
 app = FastAPI(
@@ -44,11 +65,15 @@ app = FastAPI(
 
 
 # -------------------------------------------------------------------
-# Schéma d'entrée : dictionnaire de features
+# Input schema: feature dictionary
 # -------------------------------------------------------------------
 
 class AccidentFeatures(BaseModel):
     features: Dict[str, Any]
+
+class PredictionInputV2(BaseModel):
+    cities: List[str]
+    timestamp: str
 
 
 # -------------------------------------------------------------------
@@ -64,8 +89,9 @@ def health_check():
     }
 
 
+
 # -------------------------------------------------------------------
-# Endpoint de prédiction
+# Prediction endpoint
 # -------------------------------------------------------------------
 
 @app.post("/api/v1/predict")
@@ -73,7 +99,7 @@ def predict(payload: AccidentFeatures):
     try:
         input_dict = payload.features
 
-        # Vérification des features manquantes
+        # Check for missing features
         missing_features = set(feature_names) - set(input_dict.keys())
         if missing_features:
             raise HTTPException(
@@ -81,20 +107,20 @@ def predict(payload: AccidentFeatures):
                 detail=f"Missing features: {sorted(list(missing_features))}"
             )
 
-        # Création du DataFrame dans le BON ordre
+        # Create the DataFrame in the expected order
         X = pd.DataFrame([input_dict], columns=feature_names)
 
-        # Conversion bool -> int si nécessaire
+        # Convert bool -> int if needed
         X = X.replace({True: 1, False: 0})
 
-        # Prédiction
+        # Prediction
         prediction = model.predict(X)
 
         response = {
             "prediction": float(prediction[0])
         }
 
-        # Probabilités si dispo
+        # Probabilities if available
         if hasattr(model, "predict_proba"):
             response["probabilites"] = model.predict_proba(X)[0].tolist()
 
@@ -107,4 +133,79 @@ def predict(payload: AccidentFeatures):
             status_code=500,
             detail=f"Prediction error: {e}"
         )
+    
+@app.post("/api/v2/predict")
+async def predict_v2(payload: PredictionInputV2):
+    """
+    V2 Endpoint: Receives business requirements and orchestrates transformation before inference.
+    """
+    logger.info(f">>>>> Call /api/v2/predict called <<<<<")
+    # 1. Prepare the payload
+    inputs = {
+        "cities": payload.cities,
+        "timestamp": payload.timestamp
+    }
+    try:
+        preds = model_prediction(inputs, model, feature_names)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {exc}")
+    logger.info(f">>>>> Endpoint /api/v2/predict completed <<<<<\n\nx=======x")
+    return preds
 
+@app.post("/api/risk-timeline")
+async def risk_timeline():
+    """
+    Endpoint to retrieve the risk timeline from business requirements.
+    """
+    logger.info(f">>>>> Call /api/risk-timeline called <<<<<")
+    
+    current_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    timestamp_iso = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    inputs = {
+        "cities": data,
+        "timestamp": timestamp_iso
+    }
+
+    try:
+        timeline_data = timeline_prediction(inputs, model, feature_names)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Timeline error: {exc}")
+    logger.info(f"Timeline data: {timeline_data}")
+    logger.info(f">>>>> Endpoint /api/risk-timeline completed <<<<<\n\nx=======x")
+    return timeline_data
+
+@app.get("/api/roads")
+def get_roads():
+    logger.info(f">>>>> Call GET /api/roads called <<<<<")
+    load_file_path = path_prefix+API_CFG.road_secteur_path
+    if not Path(load_file_path).exists():
+        load_file_path = path_prefix+API_CFG.road_secteur_path.replace("_current", "_ref")
+
+    logger.info(f"Loading roads data from {load_file_path}")
+    df = pd.read_csv(load_file_path, sep=";", encoding="utf-8", dtype=str)
+    logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
+    return df.to_dict(orient="records")
+
+@app.put("/api/roads")
+def put_roads(rows: list[dict]):
+    logger.info(f">>>>> Call PUT /api/roads called <<<<<")
+    df = pd.DataFrame(rows)
+    df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
+    logger.info(f"CSV file {API_CFG.road_secteur_path} updated successfully with {len(rows)} rows.")
+    logger.info(f">>>>> Endpoint PUT /api/roads completed <<<<<\n\nx=======x")
+    return {"status": "ok"}
+
+# -------------------------------------------------------------------
+# Main
+# -------------------------------------------------------------------
+
+@app.get("/")
+def health_check_api():
+    return FileResponse(TEMPLATE_PATH)

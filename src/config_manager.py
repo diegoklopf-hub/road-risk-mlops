@@ -88,22 +88,28 @@ class ConfigurationManager:
             input_data_relative_path=_to_path(_get(cfg, "input_data_relative_path")),
             out_merged_data_relative_path=_to_path(_get(cfg, "out_merged_data_relative_path")),
             status_file=_to_path(status_file),
-            all_schema=self.schema,
+            all_schema=schema_columns
         )
-    
-
-
 
     def get_data_encodage_config(self) -> DataEncodeConfig:
         cfg = _get(self.config, "data_encodage")
-
         status_file = (_get(cfg, "status_file") if ((isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file")) else _get(cfg, "STATUS_FILE"))
+
+
+        schema_origin = self.schema.COLUMNS
+        additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
+        remove_col = self.schema.REMOVE_ENCODED_COLUMNS
+        schema = {**schema_origin, **additional_schema}
+        for col in remove_col:
+                schema.pop(col, None)
 
         return DataEncodeConfig(
             merged_data_path=_to_path(_get(cfg, "merged_data_path")),
             merged_data_encoded_path=_to_path(_get(cfg, "merged_data_encoded_path")),
             encode_columns=list(_get(cfg, "encode_columns")),
+            model_one_hot_encoder_path=_to_path(_get(cfg, "model_one_hot_encoder_path")),
             status_file=_to_path(status_file),
+            schema=schema,
         )
 
     def get_data_transformation_config(self) -> DataTransformationConfig:
@@ -114,10 +120,18 @@ class ConfigurationManager:
         train_test_path = _to_path(_get(cfg, "train_test_path"))
         create_directories([train_test_path])
 
+        schema_origin = self.schema.COLUMNS
+        additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
+        remove_col = self.schema.REMOVE_ENCODED_COLUMNS
+        schema = {**schema_origin, **additional_schema}
+        for col in remove_col:
+                schema.pop(col, None)
+
         return DataTransformationConfig(
             input_path=_to_path(_get(cfg, "input_path")),
             train_test_path=train_test_path,
             status_file=_to_path(status_file),
+            schema=schema,
         )
 
     # ---------------- MODEL ---------------- #

@@ -16,7 +16,7 @@ functions.
 """
 
 
-def check_columns(df, expected_columns, year):
+def check_structure(df, expected_columns, year):
     """Ensure dataframe columns match expected set for consistency across years.
 
     If `expected_columns` is None (first year read), returns the current
@@ -56,7 +56,7 @@ def read_csv(raw_data_path, base_name, from_year=2019, to_year=2024):
         try:
             # Files use semicolon separators and latin1 encoding in this dataset
             new_df = pd.read_csv(file_path, sep=";", encoding="latin1", low_memory=False)
-            expected_col = check_columns(new_df, expected_col, year)
+            expected_col = check_structure(new_df, expected_col, year)
             df = pd.concat([df, new_df], ignore_index=True)
         except FileNotFoundError:
             logger.error(f"File not found: {file_path}")

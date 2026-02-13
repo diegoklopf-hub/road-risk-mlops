@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.A.V.E.R. — Système d'Analyse et de Vigilance en Environnement Routier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #1a1f2e;
+            --bg-card: #232938;
+            --bg-input: #1e2433;
+            --bg-header-bar: #111623;
+            --bg-section-bar: #2a3146;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text-title: #e8ecf4;
+            --text-body: #b0b8cc;
+            --text-secondary: #8892a8;
+            --text-muted: #5c6580;
+            --fire-500: #f97316;
+            --fire-400: #fb923c;
+            --fire-600: #ea580c;
+            --fire-soft: rgba(249,115,22,0.12);
+            --fire-border: rgba(249,115,22,0.3);
+            --danger: #ef4444;
+            --danger-soft: rgba(239,68,68,0.12);
+            --danger-border: rgba(239,68,68,0.25);
+            --warning: #eab308;
+            --warning-soft: rgba(234,179,8,0.12);
+            --warning-border: rgba(234,179,8,0.25);
+            --success: #22c55e;
+            --success-soft: rgba(34,197,94,0.12);
+            --success-border: rgba(34,197,94,0.25);
+
+            /* 8 Risk level colors */
+            --risk-10: #dc2626;
+            --risk-10-soft: rgba(220,38,38,0.12);
+            --risk-10-border: rgba(220,38,38,0.25);
+            --risk-9: #ef4444;
+            --risk-9-soft: rgba(239,68,68,0.12);
+            --risk-9-border: rgba(239,68,68,0.25);
+            --risk-8: #f97316;
+            --risk-8-soft: rgba(249,115,22,0.12);
+            --risk-8-border: rgba(249,115,22,0.3);
+            --risk-7: #fb923c;
+            --risk-7-soft: rgba(251,146,60,0.12);
+            --risk-7-border: rgba(251,146,60,0.3);
+            --risk-6: #eab308;
+            --risk-6-soft: rgba(234,179,8,0.12);
+            --risk-6-border: rgba(234,179,8,0.25);
+            --risk-5: #facc15;
+            --risk-5-soft: rgba(250,204,21,0.08);
+            --risk-5-border: rgba(250,204,21,0.3);
+            --risk-4: #a3e635;
+            --risk-4-soft: rgba(163,230,53,0.12);
+            --risk-4-border: rgba(163,230,53,0.3);
+            --risk-1: #22c55e;
+            --risk-1-soft: rgba(34,197,94,0.12);
+            --risk-1-border: rgba(34,197,94,0.25);
+            --info: #3b82f6;
+            --info-soft: rgba(59,130,246,0.12);
+            --purple: #a78bfa;
+            --purple-soft: rgba(167,139,250,0.12);
+            --radius-sm: 6px;
+            --radius: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+            --shadow: 0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.35), 0 4px 6px -4px rgba(0,0,0,0.2);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── HEADER ── */
+        header {
+            background: var(--bg-header-bar);
+            padding: 0 1.5rem;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section { display: flex; align-items: center; gap: 0.75rem; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--fire-500);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .logo-text { display: flex; flex-direction: column; gap: 0px; }
+        .logo-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem; font-weight: 600; letter-spacing: 3px; color: #fff;
+        }
+        .logo-subtitle { font-size: 0.62rem; color: #94A3B8; letter-spacing: 0.5px; }
+
+        .sim-badge {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.58rem; font-weight: 600; letter-spacing: 1.5px;
+            color: #A78BFA; background: rgba(167,139,250,0.12);
+            border: 1px solid rgba(167,139,250,0.25);
+            padding: 0.15rem 0.45rem; border-radius: var(--radius-sm);
+            animation: pulse-badge 3s ease-in-out infinite;
+        }
+        @keyframes pulse-badge { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+
+        .header-right { display: flex; align-items: center; gap: 0.75rem; }
+
+        .caserne-tag {
+            font-size: 0.72rem; color: #CBD5E1;
+            background: rgba(255,255,255,0.06);
+            padding: 0.3rem 0.6rem; border-radius: var(--radius-sm);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .user-section { display: flex; align-items: center; gap: 0.6rem; }
+
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--fire-500);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: 700; color: white;
+        }
+        .user-name { font-size: 0.8rem; font-weight: 600; color: #E2E8F0; }
+
+        .btn-ghost-header {
+            padding: 0.3rem 0.6rem; background: transparent;
+            border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-sm);
+            color: #94A3B8; font-size: 0.72rem; font-weight: 500;
+            cursor: pointer; transition: var(--transition); font-family: 'Outfit', sans-serif;
+        }
+        .btn-ghost-header:hover { border-color: rgba(255,255,255,0.25); color: #E2E8F0; }
+
+        .btn-login-header {
+            padding: 0.35rem 0.8rem; background: var(--fire-500); border: none;
+            border-radius: var(--radius-sm); color: white; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+        }
+        .btn-login-header:hover { background: var(--fire-600); }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex; padding: 0 1.5rem; gap: 0.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .nav-tab {
+            padding: 0.75rem 1.25rem; cursor: pointer; border: none;
+            background: transparent; color: var(--text-muted);
+            font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+            font-weight: 500; transition: var(--transition);
+            border-bottom: 2px solid transparent;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .nav-tab:hover { color: var(--text-body); }
+        .nav-tab.active { color: var(--fire-500); border-bottom-color: var(--fire-500); }
+        .nav-tab .tab-icon { font-size: 0.9rem; }
+
+        /* ── MAIN ── */
+        main { flex: 1; }
+        .page {
+            display: none; padding: 1.5rem;
+            max-width: 1500px; margin: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── LOGIN ── */
+        .login-container {
+            max-width: 380px; margin: 5rem auto;
+            background: var(--bg-card); border-radius: var(--radius-lg);
+            padding: 2.5rem; border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+        .login-header { text-align: center; margin-bottom: 2rem; }
+        .login-header .login-icon {
+            width: 56px; height: 56px;
+            background: var(--fire-soft); border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; margin: 0 auto 1rem;
+            border: 1px solid var(--fire-border);
+        }
+        .login-header h2 { font-size: 1.3rem; font-weight: 700; color: var(--text-title); margin-bottom: 0.3rem; }
+        .login-header p { color: var(--text-secondary); font-size: 0.8rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block; margin-bottom: 0.35rem;
+            font-size: 0.78rem; color: var(--text-secondary); font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.6rem 0.85rem;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-title);
+            font-family: 'Outfit', sans-serif; font-size: 0.88rem;
+            transition: var(--transition);
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--fire-500);
+            box-shadow: 0 0 0 3px var(--fire-soft);
+        }
+
+        .login-btn {
+            width: 100%; padding: 0.75rem;
+            background: var(--fire-500); color: white; border: none;
+            border-radius: var(--radius-sm); font-size: 0.9rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition);
+            font-family: 'Outfit', sans-serif; margin-top: 0.5rem;
+        }
+        .login-btn:hover { background: var(--fire-600); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+
+        /* ── CARD MODULE ── */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .card-bar {
+            background: var(--bg-section-bar);
+            padding: 0.7rem 1.25rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-bar-title {
+            font-size: 0.82rem; font-weight: 600; color: #F1F5F9;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .card-bar-subtitle { font-size: 0.68rem; color: #94A3B8; }
+        .card-body { padding: 1.25rem; }
+
+        /* ── ALERT STRIP ── */
+        .alert-strip {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 0.85rem 1.25rem;
+            display: flex; gap: 1.5rem; margin-bottom: 1.25rem;
+            flex-wrap: wrap; align-items: center;
+            border-left: 4px solid var(--warning);
+        }
+        .alert-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+        .alert-label { color: var(--text-muted); font-weight: 500; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .alert-value { color: var(--text-title); font-weight: 600; }
+        .alert-value.warning-text { color: var(--warning); }
+        .alert-separator { width: 1px; height: 24px; background: var(--border); }
+
+        /* ── FILTER ── */
+        .filter-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.25rem; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .filter-group label { font-size: 0.72rem; color: var(--text-secondary); font-weight: 500; }
+        .filter-group input[type="datetime-local"],
+        .filter-group input[type="date"],
+        .filter-group input[type="time"],
+        .filter-group select {
+            padding: 0.5rem 0.7rem; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-title); font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem; transition: var(--transition);
+        }
+        .filter-group input:focus, .filter-group select:focus {
+            outline: none; border-color: var(--fire-500);
+            box-shadow: 0 0 0 3px var(--fire-soft);
+        }
+
+        .section-label {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 1.2px;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem;
+        }
+
+        .commune-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+        .commune-chip {
+            display: flex; align-items: center; gap: 0.35rem;
+            padding: 0.35rem 0.7rem; border-radius: 100px;
+            cursor: pointer; transition: var(--transition);
+            border: 1px solid var(--border); background: var(--bg-input);
+            font-size: 0.78rem; font-weight: 500; color: var(--text-secondary);
+            user-select: none;
+        }
+        .commune-chip:hover { border-color: var(--border-hover); color: var(--text-title); }
+        .commune-chip.checked { background: var(--fire-soft); border-color: var(--fire-border); color: var(--fire-600); }
+        .commune-chip input { display: none; }
+        .commune-chip .chip-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--text-muted); transition: var(--transition);
+        }
+        .commune-chip.checked .chip-dot { background: var(--fire-500); }
+
+        .filter-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+        .btn-primary {
+            padding: 0.55rem 1.15rem;
+            background: var(--fire-500); color: white; border: none;
+            border-radius: var(--radius-sm); font-weight: 600;
+            font-size: 0.82rem; cursor: pointer; transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+        }
+        .btn-primary:hover { background: var(--fire-600); box-shadow: 0 4px 12px rgba(249,115,22,0.25); }
+
+        .btn-secondary {
+            padding: 0.55rem 1.15rem; background: var(--bg-card);
+            color: var(--text-secondary); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); font-weight: 500;
+            font-size: 0.82rem; cursor: pointer; transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+        }
+        .btn-secondary:hover { border-color: var(--border-hover); color: var(--text-title); background: var(--bg-input); }
+
+        .btn-danger-outline {
+            padding: 0.55rem 1.15rem;
+            background: var(--bg-card); color: var(--danger);
+            border: 1px solid var(--danger-border); border-radius: var(--radius-sm);
+            font-weight: 600; font-size: 0.82rem; cursor: pointer;
+            transition: var(--transition); font-family: 'Outfit', sans-serif;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+        }
+        .btn-danger-outline:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+        /* ── RISK TIMELINE ── */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 0.4rem;
+            margin-bottom: 1.25rem;
+        }
+        .timeline-slot {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.4rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: default;
+        }
+        .timeline-slot-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.62rem; font-weight: 500;
+            color: var(--text-muted); margin-bottom: 0.4rem;
+            letter-spacing: 0.5px;
+        }
+        .timeline-slot-bar {
+            height: 6px; border-radius: 3px;
+            background: var(--border); margin-bottom: 0.35rem;
+            transition: var(--transition);
+        }
+        .timeline-slot-label {
+            font-size: 0.6rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.3px;
+            color: var(--text-muted);
+        }
+        .timeline-slot.risk-10 .timeline-slot-bar { background: var(--risk-10); }
+        .timeline-slot.risk-10 .timeline-slot-label { color: var(--risk-10); }
+        .timeline-slot.risk-10 { border-color: var(--risk-10-border); background: var(--risk-10-soft); }
+        .timeline-slot.risk-9 .timeline-slot-bar { background: var(--risk-9); }
+        .timeline-slot.risk-9 .timeline-slot-label { color: var(--risk-9); }
+        .timeline-slot.risk-9 { border-color: var(--risk-9-border); background: var(--risk-9-soft); }
+        .timeline-slot.risk-8 .timeline-slot-bar { background: var(--risk-8); }
+        .timeline-slot.risk-8 .timeline-slot-label { color: var(--risk-8); }
+        .timeline-slot.risk-8 { border-color: var(--risk-8-border); background: var(--risk-8-soft); }
+        .timeline-slot.risk-7 .timeline-slot-bar { background: var(--risk-7); }
+        .timeline-slot.risk-7 .timeline-slot-label { color: var(--risk-7); }
+        .timeline-slot.risk-7 { border-color: var(--risk-7-border); background: var(--risk-7-soft); }
+        .timeline-slot.risk-6 .timeline-slot-bar { background: var(--risk-6); }
+        .timeline-slot.risk-6 .timeline-slot-label { color: var(--risk-6); }
+        .timeline-slot.risk-6 { border-color: var(--risk-6-border); background: var(--risk-6-soft); }
+        .timeline-slot.risk-5 .timeline-slot-bar { background: var(--risk-5); }
+        .timeline-slot.risk-5 .timeline-slot-label { color: var(--risk-5); }
+        .timeline-slot.risk-5 { border-color: var(--risk-5-border); background: var(--risk-5-soft); }
+        .timeline-slot.risk-4 .timeline-slot-bar { background: var(--risk-4); }
+        .timeline-slot.risk-4 .timeline-slot-label { color: var(--risk-4); }
+        .timeline-slot.risk-4 { border-color: var(--risk-4-border); background: var(--risk-4-soft); }
+        .timeline-slot.risk-1 .timeline-slot-bar { background: var(--risk-1); }
+        .timeline-slot.risk-1 .timeline-slot-label { color: var(--risk-1); }
+        .timeline-slot.risk-1 { border-color: var(--risk-1-border); background: var(--risk-1-soft); }
+
+        /* ── PREDICTION TABLE ── */
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left; padding: 0.85rem 1.1rem;
+            font-size: 0.68rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); font-weight: 600;
+            background: var(--bg-input); border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 1rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem; color: var(--text-secondary);
+        }
+        td strong { color: var(--text-title); font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        tr { transition: background var(--transition); }
+        tr:hover { background: var(--bg-input); }
+
+        .risk-badge {
+            padding: 0.3rem 0.6rem; border-radius: 100px;
+            font-weight: 600; font-size: 0.68rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .risk-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+        .risk-badge.risk-10 { background: var(--risk-10-soft); color: var(--risk-10); border: 1px solid var(--risk-10-border); }
+        .risk-badge.risk-10::before { background: var(--risk-10); }
+        .risk-badge.risk-9 { background: var(--risk-9-soft); color: var(--risk-9); border: 1px solid var(--risk-9-border); }
+        .risk-badge.risk-9::before { background: var(--risk-9); }
+        .risk-badge.risk-8 { background: var(--risk-8-soft); color: var(--risk-8); border: 1px solid var(--risk-8-border); }
+        .risk-badge.risk-8::before { background: var(--risk-8); }
+        .risk-badge.risk-7 { background: var(--risk-7-soft); color: var(--risk-7); border: 1px solid var(--risk-7-border); }
+        .risk-badge.risk-7::before { background: var(--risk-7); }
+        .risk-badge.risk-6 { background: var(--risk-6-soft); color: var(--risk-6); border: 1px solid var(--risk-6-border); }
+        .risk-badge.risk-6::before { background: var(--risk-6); }
+        .risk-badge.risk-5 { background: var(--risk-5-soft); color: var(--risk-5); border: 1px solid var(--risk-5-border); }
+        .risk-badge.risk-5::before { background: var(--risk-5); }
+        .risk-badge.risk-4 { background: var(--risk-4-soft); color: var(--risk-4); border: 1px solid var(--risk-4-border); }
+        .risk-badge.risk-4::before { background: var(--risk-4); }
+        .risk-badge.risk-1 { background: var(--risk-1-soft); color: var(--risk-1); border: 1px solid var(--risk-1-border); }
+        .risk-badge.risk-1::before { background: var(--risk-1); }
+
+        .trend-up { color: var(--danger); font-weight: 600; font-size: 0.82rem; }
+        .trend-stable { color: var(--text-muted); font-size: 0.82rem; }
+        .trend-down { color: var(--success); font-weight: 600; font-size: 0.82rem; }
+
+        tr.risk-10-row { border-left: 3px solid var(--risk-10); }
+        tr.risk-9-row { border-left: 3px solid var(--risk-9); }
+        tr.risk-8-row { border-left: 3px solid var(--risk-8); }
+        tr.risk-7-row { border-left: 3px solid var(--risk-7); }
+        tr.risk-6-row { border-left: 3px solid var(--risk-6); }
+        tr.risk-5-row { border-left: 3px solid var(--risk-5); }
+        tr.risk-4-row { border-left: 3px solid var(--risk-4); }
+        tr.risk-1-row { border-left: 3px solid var(--risk-1); }
+
+        /* ── EDITOR ── */
+        .editor-toolbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 1.25rem;
+            flex-wrap: wrap; gap: 1rem;
+        }
+        .editor-title {
+            font-size: 1.05rem; font-weight: 700;
+            color: var(--text-title);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .sync-indicator {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.78rem; color: var(--success); font-weight: 500;
+        }
+        .sync-indicator.syncing { color: var(--warning); }
+        .sync-indicator.error { color: var(--danger); }
+        .sync-pulse {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--success); animation: syncPulse 2s infinite;
+        }
+        .sync-indicator.syncing .sync-pulse { background: var(--warning); }
+        .sync-indicator.error .sync-pulse { background: var(--danger); animation: none; }
+        @keyframes syncPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+        .stat-cards { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1rem 1.25rem;
+            flex: 1; min-width: 140px; box-shadow: var(--shadow);
+        }
+        .stat-card .stat-val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem; font-weight: 600; color: var(--text-title);
+            line-height: 1; margin-bottom: 0.2rem;
+        }
+        .stat-card .stat-lbl {
+            font-size: 0.68rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 500;
+        }
+
+        .csv-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            max-height: 50vh; overflow-y: auto; overflow-x: auto;
+            box-shadow: var(--shadow);
+        }
+        .csv-container::-webkit-scrollbar { width: 6px; height: 6px; }
+        .csv-container::-webkit-scrollbar-track { background: var(--bg-page); }
+        .csv-container::-webkit-scrollbar-thumb { background: #3d4560; border-radius: 3px; }
+
+        .csv-table { min-width: 100%; font-size: 0.72rem; }
+        .csv-table th {
+            position: sticky; top: 0; z-index: 10;
+            white-space: nowrap; font-size: 0.6rem; padding: 0.6rem 0.4rem;
+        }
+        .csv-table td { padding: 0.3rem; }
+        .csv-table input {
+            width: 100%; min-width: 42px; padding: 0.3rem 0.4rem;
+            background: transparent; border: 1px solid transparent;
+            border-radius: 4px; color: var(--text-title);
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+            transition: var(--transition);
+        }
+        .csv-table input:hover { border-color: var(--border); background: var(--bg-input); }
+        .csv-table input:focus { outline: none; border-color: var(--fire-500); background: var(--bg-input); box-shadow: 0 0 0 2px var(--fire-soft); }
+        .csv-table input.readonly { color: var(--text-muted); }
+        .csv-table input.wide { min-width: 200px; }
+
+        .row-actions { display: flex; gap: 0.2rem; }
+        .delete-btn {
+            padding: 0.2rem 0.35rem; background: transparent;
+            border: 1px solid transparent; border-radius: 4px;
+            cursor: pointer; font-size: 0.65rem; transition: var(--transition);
+            color: var(--text-muted);
+        }
+        .delete-btn:hover { background: var(--danger-soft); border-color: var(--danger-border); color: var(--danger); }
+
+        .add-section {
+            margin-top: 1.25rem; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .add-section-header {
+            background: var(--bg-section-bar); padding: 0.7rem 1.25rem;
+            font-size: 0.82rem; font-weight: 600; color: #F1F5F9;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .add-section-body { padding: 1.25rem; }
+
+        .add-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.6rem; margin-bottom: 1rem;
+        }
+        .add-grid .filter-group input,
+        .add-grid .filter-group select {
+            width: 100%; padding: 0.45rem 0.5rem;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-title);
+            font-size: 0.78rem; font-family: 'Outfit', sans-serif;
+            transition: var(--transition);
+        }
+        .add-grid .filter-group input:focus,
+        .add-grid .filter-group select:focus {
+            outline: none; border-color: var(--fire-500);
+            box-shadow: 0 0 0 2px var(--fire-soft);
+        }
+        .add-grid .filter-group.wide { grid-column: span 2; }
+        .add-grid .filter-group label { font-size: 0.68rem; }
+
+        /* ── FOOTER ── */
+        footer {
+            background: var(--bg-card); border-top: 1px solid var(--border);
+            padding: 1.25rem 2rem; text-align: center;
+        }
+        .footer-creators { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .footer-creators strong { color: var(--text-title); font-weight: 600; }
+        .footer-project { font-size: 0.68rem; color: var(--text-muted); }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            padding: 0.8rem 1.2rem; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; gap: 0.6rem;
+            transform: translateY(80px); opacity: 0;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000; font-size: 0.82rem; font-weight: 500;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: var(--bg-card); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg); width: 420px; max-width: 90vw;
+            overflow: hidden; transform: scale(0.95); transition: transform 0.25s;
+        }
+        .modal-overlay.open .modal { transform: scale(1); }
+        .modal-header {
+            background: var(--danger); padding: 1rem 1.5rem;
+            color: white; font-weight: 700; font-size: 0.95rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .modal-body { padding: 1.5rem; }
+        .modal-body p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6; }
+        .modal-body .form-group label { font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.3rem; display: block; }
+        .modal-body .form-group input {
+            width: 100%; padding: 0.6rem 0.85rem;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-title);
+            font-family: 'Outfit', sans-serif; font-size: 0.88rem;
+        }
+        .modal-body .form-group input:focus { outline: none; border-color: var(--fire-500); box-shadow: 0 0 0 3px var(--fire-soft); }
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+            display: flex; justify-content: flex-end; gap: 0.6rem;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) {
+            header { padding: 0 1rem; }
+            .page { padding: 1rem; }
+            .filter-row { flex-direction: column; }
+            .alert-strip { flex-direction: column; gap: 0.6rem; }
+            .alert-separator { display: none; }
+            nav { overflow-x: auto; padding: 0 1rem; }
+            .nav-tab { padding: 0.65rem 0.9rem; font-size: 0.78rem; white-space: nowrap; }
+            .stat-cards { flex-direction: column; }
+            .caserne-tag { display: none; }
+            .logo-subtitle { display: none; }
+            .timeline-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-section">
+        <div class="logo-icon">🚒</div>
+        <div class="logo-text">
+            <div class="logo-title">S.A.V.E.R.</div>
+            <div class="logo-subtitle">Analyse & Vigilance en Environnement Routier</div>
+        </div>
+        <span class="sim-badge">SIMULATION MLOPS</span>
+    </div>
+    <div class="header-right">
+        <span class="caserne-tag">SDIS 33 — Bassens</span>
+        <div id="loggedOutState" class="user-section hidden">
+            <button class="btn-login-header" onclick="showLoginPage()">Connexion</button>
+        </div>
+        <div id="loggedInState" class="user-section">
+            <div class="user-avatar">HY</div>
+            <span class="user-name" id="currentUserName">Cpt. H. Ydrant</span>
+            <button class="btn-ghost-header" onclick="logout()">Déconnexion</button>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <button class="nav-tab active" data-page="dashboard"><span class="tab-icon">📊</span> Tableau de bord</button>
+    <button class="nav-tab" data-page="editor"><span class="tab-icon">🛣️</span> Typologie routière</button>
+</nav>
+
+<main>
+    <!-- LOGIN -->
+    <div id="login" class="page">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-icon">🔐</div>
+                <h2>Authentification</h2>
+                <p>Accès réservé au personnel SDIS 33</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group"><label>Identifiant</label><input type="text" id="loginUsername" placeholder="Ex: cpt.hydrant" value="cpt.hydrant"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" value="simulation2026"></div>
+                <button type="submit" class="login-btn">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="page active">
+        <div class="alert-strip">
+            <div class="alert-item"><span class="alert-label">Météo</span><span class="alert-value" id="dashMeteo">⏳ Chargement...</span></div>
+            <div class="alert-separator"></div>
+            <div class="alert-item"><span class="alert-label">Luminosité</span><span class="alert-value" id="dashLuminosity">⏳ Chargement...</span></div>
+            <div class="alert-separator"></div>
+            <div class="alert-item" id="dashAlertItem"><span class="alert-label">Alerte active</span><span class="alert-value" id="dashAlert">—</span></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+            <div class="card-bar">
+                <span class="card-bar-title">🎯 Filtres de prédiction</span>
+            </div>
+            <div class="card-body">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Date</label>
+                        <input type="date" id="dateStart">
+                    </div>
+                    <div class="filter-group">
+                        <label>Heure de début</label>
+                        <select id="timeStart">
+                            <option value="00:00">00h00</option>
+                            <option value="01:00">01h00</option>
+                            <option value="02:00">02h00</option>
+                            <option value="03:00">03h00</option>
+                            <option value="04:00">04h00</option>
+                            <option value="05:00">05h00</option>
+                            <option value="06:00">06h00</option>
+                            <option value="07:00">07h00</option>
+                            <option value="08:00">08h00</option>
+                            <option value="09:00">09h00</option>
+                            <option value="10:00">10h00</option>
+                            <option value="11:00">11h00</option>
+                            <option value="12:00">12h00</option>
+                            <option value="13:00">13h00</option>
+                            <option value="14:00">14h00</option>
+                            <option value="15:00">15h00</option>
+                            <option value="16:00">16h00</option>
+                            <option value="17:00">17h00</option>
+                            <option value="18:00">18h00</option>
+                            <option value="19:00">19h00</option>
+                            <option value="20:00">20h00</option>
+                            <option value="21:00">21h00</option>
+                            <option value="22:00">22h00</option>
+                            <option value="23:00">23h00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-label">Communes du secteur</div>
+                <div class="commune-grid" id="communeFilters">
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Bassens"><span class="chip-dot"></span> Bassens</label>
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Sainte-Eulalie"><span class="chip-dot"></span> Sainte-Eulalie</label>
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Carbon-Blanc"><span class="chip-dot"></span> Carbon-Blanc</label>
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Yvrac"><span class="chip-dot"></span> Yvrac</label>
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Ambarès-et-Lagrave"><span class="chip-dot"></span> Ambarès-et-Lagrave</label>
+                    <label class="commune-chip checked"><input type="checkbox" checked data-commune="Lormont"><span class="chip-dot"></span> Lormont</label>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn-primary" onclick="runPrediction()">🚀 Mettre à jour la prédiction</button>
+                    <button class="btn-secondary" onclick="resetFilters()">↺ Réinitialiser</button>
+                    <button class="btn-danger-outline" id="alertBtn" onclick="openAlertModal()">🚨 Alerte risque élevé</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Timeline -->
+        <div class="card">
+            <div class="card-bar">
+                <span class="card-bar-title">⏱️ Niveaux de risque par créneau (3h)</span>
+            </div>
+            <div class="card-body">
+                <div class="timeline-grid" id="timelineGrid">
+                    <!-- filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="card">
+            <div class="card-bar">
+                <span class="card-bar-title">📋 Zones prioritaires </span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Segment routier</th>
+                            <th>Commune</th>
+                            <th>Niveau de risque</th>
+                            <th>Facteurs déterminants (Modèle)</th>
+                            <th>Tendance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictionResults">
+                        <tr class="risk-8-row">
+                            <td><strong>Voie rapide Bassens-Ambès</strong></td>
+                            <td>Bassens</td>
+                            <td><span class="risk-badge risk-8">Élevé</span></td>
+                            <td>Courbe serrée + Aquaplaning probable + Nuit sans éclairage</td>
+                            <td class="trend-up">↗ Hausse</td>
+                        </tr>
+                        <tr class="risk-6-row">
+                            <td><strong>Avenue de la Libération</strong></td>
+                            <td>Lormont</td>
+                            <td><span class="risk-badge risk-6">Modéré</span></td>
+                            <td>Historique BAAC : Multiples collisions par temps de pluie</td>
+                            <td class="trend-stable">→ Stable</td>
+                        </tr>
+                        <tr class="risk-6-row">
+                            <td><strong>Rocade A630 — Échangeur 1</strong></td>
+                            <td>Lormont</td>
+                            <td><span class="risk-badge risk-6">Modéré</span></td>
+                            <td>Luminosité faible + visibilité réduite par brouillard</td>
+                            <td class="trend-down">↘ Baisse</td>
+                        </tr>
+                        <tr>
+                            <td>Avenue des Guerlandes</td>
+                            <td>Bassens</td>
+                            <td><span class="risk-badge low">Faible</span></td>
+                            <td>Conditions standard, éclairage public fonctionnel</td>
+                            <td class="trend-stable">→ Stable</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div id="editor" class="page">
+        <div class="editor-toolbar">
+            <div class="editor-title">🛣️ Typologie et structure des routes — Secteur d'intervention</div>
+            <div class="sync-indicator" id="syncStatus">
+                <span class="sync-pulse"></span>
+                <span id="syncText">Synchronisé</span>
+            </div>
+        </div>
+
+        <div class="stat-cards">
+            <div class="stat-card"><div class="stat-val" id="totalRows">0</div><div class="stat-lbl">Segments routiers</div></div>
+            <div class="stat-card"><div class="stat-val" id="totalCommunes">0</div><div class="stat-lbl">Communes</div></div>
+            <div class="stat-card"><div class="stat-val" id="avgSpeed">0</div><div class="stat-lbl">VMA moyenne</div></div>
+        </div>
+
+        <div class="csv-container">
+            <table class="csv-table" id="csvTable">
+                <thead>
+                    <tr>
+                        <th>Com</th><th>Adresse</th><th>Lat</th><th>Long</th><th>Dép</th>
+                        <th>Agg</th><th>Catr</th><th>V1</th><th>Prof</th><th>Plan</th>
+                        <th>Infra</th><th>VMA</th><th>Circ</th><th>Vosp</th><th>Larrout</th>
+                        <th>Situ</th><th>Int</th><th>Col</th><th>Obs</th><th>Obsm</th>
+                        <th>Locp</th><th>Act.</th>
+                    </tr>
+                </thead>
+                <tbody id="csvBody"></tbody>
+            </table>
+        </div>
+
+        <div class="add-section">
+            <div class="add-section-header">+ Ajouter un segment routier</div>
+            <div class="add-section-body">
+                <div class="add-grid">
+                    <div class="filter-group"><label>Commune (code)*</label><select id="newCom"><option value="33003">33003 - Bassens</option><option value="33032">33032 - Ambarès</option><option value="33096">33096 - Carbon-Blanc</option><option value="33249">33249 - Lormont</option><option value="33397">33397 - Ste-Eulalie</option><option value="33554">33554 - Yvrac</option></select></div>
+                    <div class="filter-group wide"><label>Adresse*</label><input type="text" id="newAdr" placeholder="Ex: avenue de la liberation"></div>
+                    <div class="filter-group"><label>Département</label><input type="text" id="newDep" value="33"></div>
+                    <div class="filter-group"><label>Agglomération</label><select id="newAgg"><option value="1">1 - Hors agglo</option><option value="2" selected>2 - En agglo</option></select></div>
+                    <div class="filter-group"><label>Catégorie route</label><select id="newCatr"><option value="1">1 - Autoroute</option><option value="2">2 - Nationale</option><option value="3">3 - Départementale</option><option value="4" selected>4 - Communale</option><option value="6">6 - Parking</option><option value="9">9 - Autre</option></select></div>
+                    <div class="filter-group"><label>V1</label><input type="text" id="newV1" value="0.0"></div>
+                    <div class="filter-group"><label>Profil</label><select id="newProf"><option value="1" selected>1 - Plat</option><option value="2">2 - Pente</option><option value="3">3 - Sommet côte</option><option value="4">4 - Bas côte</option></select></div>
+                    <div class="filter-group"><label>Tracé en plan</label><select id="newPlan"><option value="1" selected>1 - Ligne droite</option><option value="2">2 - Courbe gauche</option><option value="3">3 - Courbe droite</option><option value="4">4 - En S</option></select></div>
+                    <div class="filter-group"><label>Infrastructure</label><select id="newInfra"><option value="0" selected>0 - Aucun</option><option value="1">1 - Souterrain</option><option value="2">2 - Pont</option><option value="3">3 - Bretelle</option><option value="4">4 - Voie ferrée</option><option value="5">5 - Carrefour aménagé</option><option value="6">6 - Zone piétonne</option><option value="8">8 - Autre</option><option value="9">9 - Inconnu</option></select></div>
+                    <div class="filter-group"><label>VMA (km/h)</label><input type="number" id="newVma" value="50"></div>
+                    <div class="filter-group"><label>Circulation</label><select id="newCirc"><option value="1">1 - Sens unique</option><option value="2" selected>2 - Bidirectionnel</option><option value="3">3 - Chaussées séparées</option><option value="5">5 - Voies affectées</option></select></div>
+                    <div class="filter-group"><label>Voie spéciale</label><select id="newVosp"><option value="0" selected>0 - Aucune</option><option value="1">1 - Piste cyclable</option><option value="2">2 - Bande cyclable</option><option value="3">3 - Voie réservée</option></select></div>
+                    <div class="filter-group"><label>Largeur route</label><input type="text" id="newLarrout" value="7.0"></div>
+                    <div class="filter-group"><label>Situation</label><select id="newSitu"><option value="1" selected>1 - Sur chaussée</option><option value="2">2 - Sur BAU</option><option value="3">3 - Sur accotement</option><option value="4">4 - Sur trottoir</option><option value="5">5 - Sur piste cyclable</option><option value="6">6 - Autre</option><option value="8">8 - Inconnu</option></select></div>
+                    <div class="filter-group"><label>Intersection</label><select id="newInt"><option value="1" selected>1 - Hors intersection</option><option value="2">2 - En X</option><option value="3">3 - En T</option><option value="4">4 - En Y</option><option value="5">5 - Plus de 4 branches</option><option value="6">6 - Giratoire</option><option value="7">7 - Place</option><option value="8">8 - Passage niveau</option><option value="9">9 - Autre</option></select></div>
+                    <div class="filter-group"><label>Collision</label><select id="newCol"><option value="1">1 - Deux véhicules frontal</option><option value="2">2 - Deux véhicules arrière</option><option value="3" selected>3 - Deux véhicules côté</option><option value="4">4 - En chaîne</option><option value="5">5 - Multiples</option><option value="6">6 - Autre</option></select></div>
+                    <div class="filter-group"><label>Obstacle fixe</label><input type="text" id="newObs" value="0"></div>
+                    <div class="filter-group"><label>Obstacle mobile</label><select id="newObsm"><option value="0">0 - Aucun</option><option value="1">1 - Piéton</option><option value="2" selected>2 - Véhicule</option><option value="4">4 - Véhicule rail</option><option value="5">5 - Animal</option><option value="9">9 - Autre</option></select></div>
+                    <div class="filter-group"><label>Localisation piéton</label><input type="text" id="newLocp" value="0"></div>
+                </div>
+                <button class="btn-primary" onclick="addNewRow()">+ Ajouter le segment</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="footer-creators">Créé par <strong>Julie PINTO</strong> · <strong>Diego KLOPFENSTEIN</strong> · <strong>Yasser BELAIDI</strong> · <strong>Yves BRU</strong></div>
+    <div class="footer-project">Projet MLOps — Certification Expert IA — Liora / Mines Paris-PSL — 2026</div>
+</footer>
+
+<div id="toast" class="toast"><span id="toastMessage">Message</span></div>
+
+<!-- Alert Modal -->
+<div class="modal-overlay" id="alertModal">
+    <div class="modal">
+        <div class="modal-header">🚨 Alerte risque élevé — Prochaines 6h</div>
+        <div class="modal-body">
+            <p id="alertSummary">Des créneaux à risque <strong>élevé ou très élevé</strong> ont été détectés dans les 6 prochaines heures. Envoyer une alerte par mail à l'équipe de garde.</p>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label>Destinataire(s)</label>
+                <input type="email" id="alertEmail" placeholder="equipe-garde@sdis33.fr" value="equipe-garde@sdis33.fr">
+            </div>
+            <div class="form-group">
+                <label>Message complémentaire (optionnel)</label>
+                <input type="text" id="alertMessage" placeholder="RAS / Patrouille renforcée conseillée...">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeAlertModal()">Annuler</button>
+            <button class="btn-primary" onclick="sendAlert()" style="background: var(--danger);">🚨 Envoyer l'alerte</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = '/api';
+    let isLoggedIn = true;
+    let currentUser = 'Cpt. H. Ydrant';
+
+    // Timeline risk data (simulated)
+    let timelineData = [];
+
+    function updateAuthUI() {
+        document.getElementById('loggedOutState').classList.toggle('hidden', isLoggedIn);
+        document.getElementById('loggedInState').classList.toggle('hidden', !isLoggedIn);
+        document.getElementById('currentUserName').textContent = currentUser;
+    }
+
+    function showLoginPage() {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('login').classList.add('active');
+    }
+
+    function login(username) {
+        isLoggedIn = true;
+        currentUser = 'Cpt. H. Ydrant';
+        updateAuthUI();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('dashboard').classList.add('active');
+        document.querySelector('[data-page="dashboard"]').classList.add('active');
+        showToast(`Bienvenue ${currentUser}`, 'success');
+    }
+
+    function logout() { isLoggedIn = false; updateAuthUI(); showToast('Déconnexion réussie', 'success'); }
+
+    // Navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const pageId = tab.dataset.page;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(pageId).classList.add('active');
+        });
+    });
+
+    document.querySelectorAll('.commune-chip input').forEach(checkbox => {
+        checkbox.addEventListener('change', function() { this.parentElement.classList.toggle('checked', this.checked); });
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('loginUsername').value); });
+
+    // ── TIMELINE ──
+    
+        /**
+     * Met à jour la frise chronologique des risques en interrogeant le nouveau endpoint API.
+     * Cette fonction remplace l'ancienne simulation buildTimeline().
+     * Elle utilise un intervalle de 3 heures pour les prédictions.
+     */
+    async function updateRiskTimeline() {
+
+        // ÉTAT DE CHARGEMENT VISUEL
+        // On vide la grille et on affiche un message d'attente pour l'utilisateur
+        const grid = document.getElementById('timelineGrid');
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 1rem;">Chargement des données ML en cours...</div>';
+
+        try {
+            // APPEL AU NOUVEAU ENDPOINT (ASYNCHRONE)
+            // On envoie une requête POST avec le timestamp de début et l'intervalle souhaité
+            const response = await fetch("/api/risk-timeline", {
+                method: "POST", // On conserve POST pour déclencher le calcul côté serveur
+                headers: { "Content-Type": "application/json" }
+            });
+
+
+            // Vérification de la validité de la réponse HTTP
+            if (!response.ok) throw new Error(`Erreur serveur : ${response.status}`);
+
+            // Conversion du corps de la réponse en objet JSON
+            const result = await response.json();
+            console.log("Données reçues :", result);
+            const data = result.data;
+            
+            // MISE À JOUR DU TITRE DE LA PÉRIODE (HEADER DE LA CARTE)
+            // Calcul de l'heure de fin pour l'affichage textuel
+            const now = new Date();
+            const startH = now.getHours();
+            const pad = n => String(n).padStart(2, '0');
+
+            // ── MISE À JOUR MÉTÉO / LUMINOSITÉ / ALERTE depuis le 1er créneau ──
+            const firstSlot = data[0];
+
+            // Météo
+            const weatherIcons = {
+                'clear sky': '☀️', 'few clouds': '🌤️', 'scattered clouds': '⛅',
+                'broken clouds': '☁️', 'overcast clouds': '☁️',
+                'light rain': '🌦️', 'moderate rain': '🌧️', 'heavy intensity rain': '🌧️',
+                'shower rain': '🌧️', 'rain': '🌧️', 'thunderstorm': '⛈️',
+                'light snow': '🌨️', 'snow': '❄️', 'mist': '🌫️', 'fog': '🌫️', 'haze': '🌫️'
+            };
+            const weatherLabels = {
+                'clear sky': 'Ciel dégagé', 'few clouds': 'Quelques nuages',
+                'scattered clouds': 'Nuages épars', 'broken clouds': 'Nuages fragmentés',
+                'overcast clouds': 'Couvert', 'light rain': 'Pluie légère',
+                'moderate rain': 'Pluie modérée', 'heavy intensity rain': 'Forte pluie',
+                'shower rain': 'Averses', 'rain': 'Pluie', 'thunderstorm': 'Orage',
+                'light snow': 'Neige légère', 'snow': 'Neige',
+                'mist': 'Brume', 'fog': 'Brouillard', 'haze': 'Brume sèche'
+            };
+            const wIcon = weatherIcons[firstSlot.description] || '🌡️';
+            const wLabel = weatherLabels[firstSlot.description] || firstSlot.description;
+            const tempC = firstSlot.temperature_c !== undefined ? `${Math.round(firstSlot.temperature_c)}°C` : '';
+            document.getElementById('dashMeteo').textContent = `${wIcon} ${wLabel} — ${tempC}`;
+
+            // Luminosité
+            const lumLabels = { 0: '🌙 Nuit', 1: '☀️ Jour', 2: '🌅 Crépuscule' };
+            document.getElementById('dashLuminosity').textContent = lumLabels[firstSlot.daylight] || '—';
+
+            // Alerte basée sur le risk_level max du 1er créneau
+            const alertEl = document.getElementById('dashAlert');
+            const alertItem = document.getElementById('dashAlertItem');
+            if (firstSlot.risk_level >= 10) {
+                alertEl.textContent = `🚨 Alerte Rouge — Risque critique — à partir de ${pad(startH)}h00`;
+                alertEl.className = 'alert-value warning-text';
+            } else if (firstSlot.risk_level >= 9) {
+                alertEl.textContent = `🔶 Alerte Orange — Risque très élevé — à partir de ${pad(startH)}h00`;
+                alertEl.className = 'alert-value warning-text';
+            } else if (firstSlot.risk_level >= 8) {
+                alertEl.textContent = `⚠️ Alerte Jaune — Risque élevé — à partir de ${pad(startH)}h00`;
+                alertEl.className = 'alert-value warning-text';
+            } else {
+                alertEl.textContent = '✅ Aucune alerte';
+                alertEl.className = 'alert-value';
+            }
+
+
+            // RENDU DYNAMIQUE DE LA GRILLE (INJECTION DOM)
+            // On vide à nouveau pour remplacer le message de chargement par les données réelles
+            grid.innerHTML = '';
+            const riskClassByLevel = {
+                10: 'risk-10', 9: 'risk-9',
+                8: 'risk-8', 7: 'risk-7',
+                6: 'risk-6', 5: 'risk-5',
+                4: 'risk-4', 1: 'risk-1'
+            };
+            
+            // Itération sur chaque créneau renvoyé par l'API
+            data.forEach((slot, i) => {
+                const h = (startH + i * 3) % 24;
+                const hEnd = (h + 3) % 24;
+
+                const riskClass = riskClassByLevel[slot.risk_level] || 'risk-1';
+                const slotDiv = document.createElement('div');
+                slotDiv.className = `timeline-slot ${riskClass}`;
+
+                slotDiv.innerHTML = `
+                    <div class="timeline-slot-time">${pad(h)}h–${pad(hEnd)}h</div>
+                    <div class="timeline-slot-bar"></div>
+                    <div class="timeline-slot-label">${slot.risk_label}</div>
+                `;
+                
+                grid.appendChild(slotDiv);
+                
+                // Mise à jour pour la logique d'alerte
+                slot.riskClass = riskClass;
+                slot.hour = h;
+                slot.riskLabel = slot.risk_label;
+            });
+
+            // Stockage global pour le bouton d'alerte
+            timelineData = data;
+            updateAlertButton();
+            
+        } catch (error) {
+            // GESTION DES ERREURS (Réseau, API indisponible, etc.)
+            console.error("Échec de updateRiskTimeline:", error);
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger);">Erreur de connexion aux prédictions temporelles.</div>';
+            showToast("Impossible de synchroniser la timeline", "error");
+        }
+    }
+
+    function updateAlertButton() {
+        // Check if any of the first 3 slots (next 6h) are high or very-high
+        const next6h = timelineData.slice(0, 3);
+        const hasHighRisk = next6h.some(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
+        const btn = document.getElementById('alertBtn');
+        if (hasHighRisk) {
+            btn.style.display = 'inline-flex';
+            btn.classList.add('pulse-alert');
+        } else {
+            btn.style.display = 'inline-flex';
+            btn.style.opacity = '0.5';
+        }
+    }
+
+    // ── ALERT MODAL ──
+    function openAlertModal() {
+        const next6h = timelineData.slice(0, 3);
+        const highSlots = next6h.filter(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
+        if (highSlots.length === 0) {
+            showToast('Aucun risque élevé détecté dans les 6 prochaines heures', 'success');
+            return;
+        }
+        const pad = n => String(n).padStart(2, '0');
+        const details = highSlots.map(s => `${pad(s.hour)}h–${pad((s.hour+3)%24)}h : ${s.riskLabel}`).join(', ');
+        document.getElementById('alertSummary').innerHTML =
+            `Créneaux à risque détectés : <strong>${details}</strong>.<br>Envoyer une alerte par mail à l'équipe de garde.`;
+        document.getElementById('alertModal').classList.add('open');
+    }
+
+    function closeAlertModal() { document.getElementById('alertModal').classList.remove('open'); }
+
+    function sendAlert() {
+        const email = document.getElementById('alertEmail').value;
+        const msg = document.getElementById('alertMessage').value;
+        if (!email) { showToast('Veuillez saisir un destinataire', 'error'); return; }
+        // Simulate sending
+        closeAlertModal();
+        showToast(`Alerte envoyée à ${email}`, 'success');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('alertModal').addEventListener('click', function(e) {
+        if (e.target === this) closeAlertModal();
+    });
+
+    // ── PREDICTION ──
+    async function runPrediction() {
+        const selectedCommunes = Array.from(document.querySelectorAll('#communeFilters input:checked')).map(cb => cb.dataset.commune);
+        if (selectedCommunes.length === 0) { showToast('Sélectionnez au moins une commune', 'error'); return; }
+
+        try {
+            const response = await fetch("/api/v2/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "cities": selectedCommunes, "timestamp": document.getElementById('dateStart').value + 'T' + document.getElementById('timeStart').value }),
+            });
+            if (!response.ok) {
+                console.error("Réponse serveur non valide:", await response.text());
+                showToast(`Erreur serveur (${response.status}). Vérifiez que l'API est lancée.`, 'error');
+                return;
+            }
+            const result = await response.json();
+            if (result.status === 'success') {
+                const predictions = result.data;
+                const tbody = document.getElementById('predictionResults');
+                tbody.innerHTML = '';
+                predictions.forEach(item => {
+                    const tr = document.createElement('tr');
+                    // Utilise directement le label du backend
+                    const riskClassMap = {
+                        10: 'risk-10', 9: 'risk-9',
+                        8: 'risk-8', 7: 'risk-7',
+                        6: 'risk-6', 5: 'risk-5',
+                        4: 'risk-4', 1: 'risk-1'
+                    };
+                    const trClassMap = {
+                        10: 'risk-10-row', 9: 'risk-9-row',
+                        8: 'risk-8-row', 7: 'risk-7-row',
+                        6: 'risk-6-row', 5: 'risk-5-row',
+                        4: 'risk-4-row', 1: 'risk-1-row'
+                    };
+                    const riskClass = riskClassMap[item.risk_level] || 'risk-1';
+                    if (trClassMap[item.risk_level]) tr.className = trClassMap[item.risk_level];
+                    tr.innerHTML = `
+                        <td><strong>${item.adresse}</strong></td>
+                        <td>${item.commune}</td>
+                        <td><span class="risk-badge ${riskClass}">${item.risk_label}</span></td>
+                        <td>${item.facteurs}</td>
+                        <td class="trend-stable">${item.stabilite}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                showToast('Prédictions mises à jour', 'success');
+            } else { showToast('Erreur lors de la prédiction', 'error'); }
+        } catch (error) {
+            console.error("Erreur lors de la requête API:", error);
+            showToast('Impossible de contacter l\'API de prédiction', 'error');
+        }
+    }
+
+    function resetFilters() {
+        document.querySelectorAll('#communeFilters input').forEach(cb => {
+            cb.checked = true; cb.parentElement.classList.add('checked');
+        });
+        showToast('Toutes les communes sélectionnées', 'success');
+    }
+
+    // ── CSV EDITOR ──
+    // Colonnes affichées dans le tableau (interface utilisateur)
+    const DISPLAY_COLUMNS = ['com','adr','lat','long','dep','agg','catr','v1','prof','plan','infra','vma','circ','vosp','larrout','situ','int','col','obs','obsm','locp'];
+
+    // Colonnes one-hot du CSV backend
+    const LOCP_CATS = ['-1','0','1','2','3','4','5','6','7','8','9'];
+    const OBS_CATS  = ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17'];
+    const OBSM_CATS = ['0','1','2','4','5','6','9'];
+
+    // Colonnes exactes du CSV backend
+    const CSV_COLUMNS = [
+        'com','adr','lat','long','dep','agg','catr','v1','prof','plan','infra','vma','circ','vosp','larrout','situ','int','col',
+        ...LOCP_CATS.map(c => 'locp_' + c),
+        ...OBS_CATS.map(c => 'obs_' + c),
+        ...OBSM_CATS.map(c => 'obsm_' + c)
+    ];
+
+    // Convertit une ligne affichage (obs/obsm/locp bruts) → ligne CSV (one-hot)
+    function displayRowToCsvRow(row) {
+        const out = {};
+        ['com','adr','lat','long','dep','agg','catr','v1','prof','plan','infra','vma','circ','vosp','larrout','situ','int','col'].forEach(k => out[k] = row[k] || '');
+        LOCP_CATS.forEach(c => out['locp_' + c] = String(row.locp) === c ? '1' : '0');
+        OBS_CATS.forEach(c => out['obs_' + c] = String(row.obs) === c ? '1' : '0');
+        OBSM_CATS.forEach(c => out['obsm_' + c] = String(row.obsm) === c ? '1' : '0');
+        return out;
+    }
+
+    // Convertit une ligne CSV (one-hot) → ligne affichage (obs/obsm/locp bruts)
+    function csvRowToDisplayRow(row) {
+        const out = {};
+        ['com','adr','lat','long','dep','agg','catr','v1','prof','plan','infra','vma','circ','vosp','larrout','situ','int','col'].forEach(k => out[k] = row[k] || '');
+        out.locp = LOCP_CATS.find(c => String(row['locp_' + c]) === '1') || '0';
+        out.obs  = OBS_CATS.find(c => String(row['obs_' + c]) === '1') || '0';
+        out.obsm = OBSM_CATS.find(c => String(row['obsm_' + c]) === '1') || '0';
+        return out;
+    }
+
+    let csvData = [];       // Données au format CSV backend (one-hot)
+    let displayData = [];   // Données au format affichage (valeurs brutes)
+
+    const ALL_ROADS_DATA = [];
+
+    async function loadDataFromAPI() {
+        setSyncStatus('syncing', 'Chargement...');
+        try {
+            const response = await fetch(`${API_BASE_URL}/roads`);
+            if (response.ok) {
+                csvData = await response.json();
+                displayData = csvData.map(csvRowToDisplayRow);
+                renderCSVTable();
+                setSyncStatus('success', 'Synchronisé');
+            }
+            else throw new Error('API indisponible');
+        } catch (error) { loadLocalData(); }
+    }
+
+    function loadLocalData() {
+        const saved = localStorage.getItem('saver_roads_data_v3');
+        csvData = saved ? JSON.parse(saved) : [...ALL_ROADS_DATA];
+        if (!saved) localStorage.setItem('saver_roads_data_v3', JSON.stringify(csvData));
+        displayData = csvData.map(csvRowToDisplayRow);
+        renderCSVTable(); setSyncStatus('success', 'Mode local');
+    }
+
+    function setSyncStatus(status, text) {
+        const el = document.getElementById('syncStatus');
+        const txt = document.getElementById('syncText');
+        el.className = 'sync-indicator';
+        if (status === 'syncing') el.classList.add('syncing');
+        else if (status === 'error') el.classList.add('error');
+        txt.textContent = text;
+    }
+
+    function updateStats() {
+        document.getElementById('totalRows').textContent = displayData.length;
+        document.getElementById('totalCommunes').textContent = new Set(displayData.map(r => r.com)).size;
+        const speeds = displayData.map(r => parseInt(r.vma) || 0).filter(v => v > 0);
+        document.getElementById('avgSpeed').textContent = (speeds.length > 0 ? Math.round(speeds.reduce((a,b) => a+b, 0) / speeds.length) : 0) + ' km/h';
+    }
+
+    function renderCSVTable() {
+        const tbody = document.getElementById('csvBody');
+        tbody.innerHTML = '';
+        displayData.forEach((row, index) => {
+            const tr = document.createElement('tr');
+            DISPLAY_COLUMNS.forEach(col => {
+                const td = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'text'; input.value = row[col] || '';
+                if (col === 'adr') input.classList.add('wide');
+                if (col === 'lat' || col === 'long') { input.classList.add('readonly'); input.readOnly = true; }
+                else { input.addEventListener('change', (e) => {
+                    displayData[index][col] = e.target.value;
+                    // Reconvertir en one-hot et mettre à jour csvData
+                    csvData[index] = displayRowToCsvRow(displayData[index]);
+                    syncData();
+                }); }
+                td.appendChild(input); tr.appendChild(td);
+            });
+            const actionTd = document.createElement('td');
+            actionTd.innerHTML = `<div class="row-actions"><button class="delete-btn" onclick="deleteRow(${index})">🗑️</button></div>`;
+            tr.appendChild(actionTd); tbody.appendChild(tr);
+        });
+        updateStats();
+    }
+
+    async function syncData() {
+        setSyncStatus('syncing', 'Synchronisation...');
+        localStorage.setItem('saver_roads_data_v3', JSON.stringify(csvData));
+        try {
+            const r = await fetch(`${API_BASE_URL}/roads`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(csvData) });
+            if (r.ok) setSyncStatus('success', 'Synchronisé'); else throw new Error('Sync failed');
+        } catch (e) { setSyncStatus('success', 'Sauvegardé localement'); }
+    }
+
+    function deleteRow(index) {
+        if (confirm('Supprimer ce segment routier ?')) {
+            csvData.splice(index, 1); displayData.splice(index, 1);
+            syncData(); renderCSVTable(); showToast('Segment supprimé', 'success');
+        }
+    }
+
+    function addNewRow() {
+        const displayRow = {};
+        const fields = {com:'newCom',adr:'newAdr',dep:'newDep',agg:'newAgg',catr:'newCatr',v1:'newV1',prof:'newProf',plan:'newPlan',infra:'newInfra',vma:'newVma',circ:'newCirc',vosp:'newVosp',larrout:'newLarrout',situ:'newSitu',int:'newInt',col:'newCol',obs:'newObs',obsm:'newObsm',locp:'newLocp'};
+        for (const [k,id] of Object.entries(fields)) displayRow[k] = document.getElementById(id).value;
+        displayRow.adr = displayRow.adr.toLowerCase();
+        // Copier lat/long depuis le premier segment existant avec le même code commune
+        const sameCommune = displayData.find(r => r.com === displayRow.com && r.lat && r.long);
+        displayRow.lat = sameCommune ? sameCommune.lat : '';
+        displayRow.long = sameCommune ? sameCommune.long : '';
+        if (!displayRow.adr) { showToast('Veuillez entrer une adresse', 'error'); return; }
+        // Ajouter aux deux tableaux : display + CSV one-hot
+        displayData.push(displayRow);
+        csvData.push(displayRowToCsvRow(displayRow));
+        syncData(); renderCSVTable();
+        document.getElementById('newAdr').value = '';
+        showToast('Segment ajouté', 'success');
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.className = `toast ${type}`;
+        document.getElementById('toastMessage').textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init date/time to now
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+        
+        // Date : entre aujourd'hui et maintenant + 3 jours
+        const maxDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        const maxDateStr = `${maxDate.getFullYear()}-${pad(maxDate.getMonth()+1)}-${pad(maxDate.getDate())}`;
+        const dateInput = document.getElementById('dateStart');
+        dateInput.value = todayStr;
+        dateInput.min = todayStr;
+        dateInput.max = maxDateStr;
+
+        // Heure : sélectionner l'heure courante arrondie
+        const currentHour = now.getHours();
+        document.getElementById('timeStart').value = `${pad(currentHour)}:00`;
+
+        loadDataFromAPI();
+        updateAuthUI();
+        updateRiskTimeline();
+
+        // Lancement de la boucle d'actualisation (toutes les 15 minutes)
+        setInterval(updateRiskTimeline, 900000);
+
+        runPrediction();
+    });
+</script>
+</body>
+</html>

@@ -55,6 +55,7 @@ data_merge:
 data_encodage:
   merged_data_path:  data/processed_merged/merged_data.csv
   merged_data_encoded_path: data/processed_merged/merged_data_encoded.csv
+  model_one_hot_encoder_path: model/one_hot_encoder.joblib
   encode_columns: ['senc','catr', 'circ', 'plan','situ','lum','agg','int','col','vosp','prof','surf','infra','atm']
   status_file: data/status.txt
   
@@ -62,7 +63,6 @@ data_transformation:
   input_path: data/processed_merged/merged_data_encoded.csv
   train_test_path: data/train_test/
   status_file: data/status.txt
-
 
 model_trainer:
   root_dir: models
@@ -81,4 +81,17 @@ model_evaluation:
   metric_file_name: metrics/metrics.json
   mlflow_uri: mlruns
 
-
+api_inference:
+  model_path: /model/best_model.joblib
+  features_path: /model/features.joblib
+  encoder_path: /model/one_hot_encoder.joblib
+  road_secteur_path: /data/ref/road_secteur_bassens_current.csv
+  template_path: /templates/saver_app.html
+  top_k: 5
+  secteur_insee:
+    Bassens: 33032
+    Sainte-Eulalie: 33397
+    Carbon-Blanc: 33096
+    Yvrac: 33554
+    Ambarès-et-Lagrave: 33003
+    Lormont: 33249

@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
-from src.data_processing.check_structure import check_schema, drop_columns
+from src.data_processing.check_structure import drop_columns
+from src.data_processing.schema_manager import SchemaManager
 from src.entity import DataEncodeConfig
-from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
+from sklearn.preprocessing import OneHotEncoder
+import joblib
 
 def calculate_99th_percentile_grav(df):
     """
@@ -90,16 +92,35 @@ class DataEncodage:
         self.df["minute_sin"] = np.sin(2 * np.pi * self.df["minute"] / 1440)
         self.df["minute_cos"] = np.cos(2 * np.pi * self.df["minute"] / 1440)
 
-        cols_to_drop = ['day_of_year', 'days_in_year', 'minute', 'hrmn', 'Hours', 'jour', 'mois']
+        self.df['week_day'] = pd.to_datetime(self.df[['an', 'mois', 'jour']].rename(columns={
+            "an": "year",
+            "mois": "month",
+            "jour": "day",
+        })).dt.weekday
+        self.df['week_day_sin'] = np.sin(2 * np.pi * self.df['week_day'] / 7)
+        self.df['week_day_cos'] = np.cos(2 * np.pi * self.df['week_day'] / 7)
+
+
+        cols_to_drop = ['day_of_year', 'days_in_year', 'minute', 'hrmn', 'Hours', 'jour', 'mois','an','week_day']
         self.df = drop_columns(self.df, cols_to_drop, logger, "merged_data.csv")
 
         logger.info('Cyclic encoding completed successfully')
         return self.df
 
     def encode_categorical_values(self):
-        print("""------------- 02 Encode categorical features -------------""")
-        self.df[self.config.encode_columns] = self.df[self.config.encode_columns].astype(int)
-        self.df = pd.get_dummies(self.df, columns=self.config.encode_columns)
+        print("""------------- 02 Encode categorical features  -------------""")
+        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        encoded_data = encoder.fit_transform(self.df[self.config.encode_columns])
+
+        # Build DataFrame with generated column names
+        column_names = encoder.get_feature_names_out(self.config.encode_columns)
+        encoded_df = pd.DataFrame(encoded_data, columns=column_names, index=self.df.index)
+
+        self.df = self.df.drop(columns=self.config.encode_columns)
+        self.df = pd.concat([self.df, encoded_df], axis=1)
+
+        print(f"Encoded joblib saved to: {self.config.model_one_hot_encoder_path}")
+        joblib.dump(encoder, self.config.model_one_hot_encoder_path)
 
     def encode_continue_score_grav(self):
         print("""------------- 03 Encode continuous severity score -------------""")
@@ -121,29 +142,18 @@ class DataEncodage:
         print("------------- 04 Validating data structure and export -------------")
 
         try:
-            cm = ConfigurationManager()
-            all_cols = set(self.df.columns)
 
-            is_schema_valid = check_schema(
-                all_cols,
-                cm.schema,
-                self.config.status_file,
-                "ENCODAGE",
-                ignore_calib=True
-            )
-
+            all_cols = set(list(self.df.columns))
+            is_schema_valid = SchemaManager(self.config.schema).check_schema(all_cols,self.config.status_file,"ENCODAGE",ignore_calib=True)
 
             if not is_schema_valid:
-                logger.warning(
-                    "Schema validation failed for ENCODAGE — continuing export anyway. "
-                    f"See {self.config.status_file} for details."
-                )
-
-            print("Exporting CSV")
-            self.df.to_csv(self.config.merged_data_encoded_path, index=False)
-            print(f"Data exported to {self.config.merged_data_encoded_path}")
-            logger.info("ENCODAGE export done")
-            return is_schema_valid
+                raise ValueError(f"Schema validation failed: See {self.config.status_file} for details.")
+            else:
+                print("Exporting CSV")
+                self.df.to_csv(self.config.merged_data_encoded_path, index=False)
+                print(f"Data exported to {self.config.merged_data_encoded_path}")
+                logger.info("ENCODAGE export done")
+                return is_schema_valid
 
 
         except Exception as e:

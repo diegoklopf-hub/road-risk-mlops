@@ -1,7 +1,9 @@
 import os
 import numpy as np
 import pandas as pd
-import sys
+import unidecode
+import re
+
 
 from src.data_processing.check_structure import drop_columns
 from src.data_processing.clean.INSEE_config import MAPPING_CORSE
@@ -176,6 +178,63 @@ def handle_corse_codes(df):
     
     return df
 
+def clean_road_data(clean_adr):
+    # Initial cleaning
+    clean_adr = clean_adr.astype(str).str.lower().str.strip()
+    clean_adr = clean_adr.str.encode('latin1').str.decode('utf-8', errors='ignore').fillna("")
+
+    # Remove street numbers
+    clean_adr = clean_adr.str.replace(r'^\d+\s*(bis|ter|quater)?\s*', '', regex=True)
+
+    # Remove narrative noise and technical details
+    clean_adr = clean_adr.apply(lambda x: re.split(r' - |\(| sur | venant | vta | vt ', x)[0].strip())
+
+    # Normalize characters
+    clean_adr = clean_adr.apply(lambda x: unidecode.unidecode(x))
+
+    # Replace common abbreviations and errors
+    replacements = {
+        r'libration': 'libération',
+        r'rpublique': 'république',
+        r'prsident': 'président',
+        r'marchal': 'maréchal',
+        r'flix': 'félix',
+        r'franois': 'françois',
+        r'clmenceau': 'clémenceau',
+        r'ambars|d’ambares': "d'ambarès",
+        r'gravires': 'gravières',
+        r'\bave\b': 'avenue',
+        r'\brte\b': 'route',
+        r'\brn\b': 'route nationale',
+        r'\bav\b': 'avenue',
+        r'\bst\b': 'saint',
+        r'\b(rn|n|route nationale)\s*230\b': 'route nationale 230',
+        r'\b(a|autoroute)\s*630\b': 'autoroute a630',
+        r'\b(autoroute\s+a\s*10|a\s*10)\b': 'autoroute a10',
+        "autoroute autoroute": "autoroute",
+        r"d'd'": "d'",
+        r"accs": "acces",
+        r"cte de": "cote de",
+        r"lon blum": "leon blum",
+        r"andr ricard": "andre ricard",
+        r" -rd \d+": "",
+        r"place de leglise": "place de l'eglise",
+        "ctre cial": "centre commercial",
+        "ccial": "centre commercial",
+    }
+
+    # Simplify major axes
+    clean_adr = clean_adr.str.replace(r'.*(route nationale 230|autoroute a630|autoroute a10).*', r'\1', regex=True)
+
+    for pattern, replacement in replacements.items():
+        clean_adr = clean_adr.str.replace(pattern, replacement, regex=True)
+
+    # Remove empty lines and process intersections
+    clean_adr = clean_adr[(clean_adr != "") & (clean_adr != "sur parking")]
+    clean_adr = clean_adr.apply(lambda x: x.split(' / ')[0].strip())
+
+    return clean_adr
+
 def clean_characteristics(df,out_path):
     print("    -> Initial shape of caracteristiques dataframe:", df.shape)
     print("    -> Columns in the dataframe:", df.columns.tolist())
@@ -190,6 +249,9 @@ def clean_characteristics(df,out_path):
     # Harmonize years
     df['an'] = df['an'].apply(clean_year)
 
+    # Harmonize address variable (adr)
+    #df['adr'] = clean_road_data(df['adr'])
+    
     # Clean and standardize department codes
     df['dep'] =  df['dep'].apply(clean_department)
 
