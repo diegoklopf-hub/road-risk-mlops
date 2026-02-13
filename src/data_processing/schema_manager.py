@@ -1,6 +1,6 @@
 import re
-
-from src.data_processing.data_clean import check_columns
+from pathlib import Path
+from src.common_utils import append_status
 
 class SchemaManager:
     def __init__(self, schema):
@@ -29,19 +29,7 @@ class SchemaManager:
         
         return f"Description not found for column: {column_name}"
 
-    def is_used_for_fit(self, column_name):
-        """
-        Check if a specific column is marked as used for fitting in the schema.
-        Example: is_used_for_fit('mois') -> True or False
-        """
-        column_info = self.schema.get('COLUMNS', {}).get(column_name)
-        
-        if column_info and 'use_for_fit' in column_info:
-            return column_info['use_for_fit']
-        
-        return False
-
-    def check_schema(self, columns_list, status_file, phase,ignore_calib=False):
+    def check_schema(self, columns_list, status_file, phase,ignore_calib=False, filter_use_for_fit=False):
         """
         Validate that the provided columns match the schema keys.
 
@@ -67,7 +55,16 @@ class SchemaManager:
         --------
         check_columns : Underlying function that performs the actual column validation.
         """
-        return check_columns(columns_list, self.schema.keys(), status_file, phase,ignore_calib)
+    
+        if filter_use_for_fit:
+            expected_columns = [
+                col for col, info in self.schema.items() 
+                if isinstance(info, dict) and info.get('use_for_fit') is True
+            ]
+        else:
+            expected_columns = self.schema.keys()
+
+        return check_columns(columns_list, expected_columns, status_file, phase,ignore_calib)
         
 def check_columns(columns_list, expected_cols_list, status_file, phase,ignore_calib=False):
     """
@@ -109,14 +106,15 @@ def check_columns(columns_list, expected_cols_list, status_file, phase,ignore_ca
     extra_cols = df_columns - schema_columns
     missing_cols = schema_columns - df_columns
 
-    with open(status_file, 'w') as f:
-        f.write(f"{phase}:")
-        if missing_cols:
-            f.write(f"Missing columns in DataFrame: {list(missing_cols)}\n")
-            validation_status = False
-        if extra_cols:
-            f.write(f"Extra columns in DataFrame: {list(extra_cols)}\n")
-            validation_status = False
-        f.write(f"Validation status: {validation_status}")
+    details_lines = []
+    if missing_cols:
+        details_lines.append(f"Missing columns in DataFrame: {list(missing_cols)}")
+        validation_status = False
+    if extra_cols:
+        details_lines.append(f"Extra columns in DataFrame: {list(extra_cols)}")
+        validation_status = False
+
+    details = "\n".join(details_lines) if details_lines else None
+    append_status(Path(status_file), phase, validation_status, details)
     
     return validation_status

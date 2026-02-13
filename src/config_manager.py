@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from src.config import CONFIG_FILE_PATH, SCHEMA_FILE_PATH, PARAMS_FILE_PATH
+from src.config import CONFIG_FILE_PATH, SCHEMA_FILE_PATH, PARAMS_FILE_PATH, STATUS_FILE
 from src.common_utils import create_directories, read_yaml
 from src.entity import (
     DataImportConfig,
@@ -9,6 +9,7 @@ from src.entity import (
     DataMergeConfig,
     DataEncodeConfig,
     DataTransformationConfig,
+    DataResamplingConfig,
     ModelTrainerConfig,
     ModelEvaluationConfig,
 )
@@ -49,6 +50,14 @@ class ConfigurationManager:
         self.params = read_yaml(params_filepath)
         self.schema = read_yaml(schema_filepath)
 
+    def get_final_schema(self):
+        schema_origin = self.schema.COLUMNS
+        additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
+        remove_col = self.schema.REMOVE_ENCODED_COLUMNS
+        schema = {**schema_origin, **additional_schema}
+        for col in remove_col:
+                schema.pop(col, None)
+        return schema
     # ---------------- DATA ---------------- #
 
     def get_data_import_config(self) -> DataImportConfig:
@@ -76,24 +85,18 @@ class ConfigurationManager:
 
     def get_data_merge_config(self) -> DataMergeConfig:
         cfg = _get(self.config, "data_merge")
-
-        status_file = (
-            _get(cfg, "status_file")
-            if ((isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file"))
-            else _get(cfg, "STATUS_FILE")
-        )
         schema_columns = _get(self.schema, "COLUMNS")
 
         return DataMergeConfig(
             input_data_relative_path=_to_path(_get(cfg, "input_data_relative_path")),
             out_merged_data_relative_path=_to_path(_get(cfg, "out_merged_data_relative_path")),
-            status_file=_to_path(status_file),
+            status_file=_to_path(STATUS_FILE),
             all_schema=schema_columns
         )
 
     def get_data_encodage_config(self) -> DataEncodeConfig:
         cfg = _get(self.config, "data_encodage")
-        status_file = (_get(cfg, "status_file") if ((isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file")) else _get(cfg, "STATUS_FILE"))
+        schema = self.get_final_schema()
 
 
         schema_origin = self.schema.COLUMNS
@@ -108,29 +111,38 @@ class ConfigurationManager:
             merged_data_encoded_path=_to_path(_get(cfg, "merged_data_encoded_path")),
             encode_columns=list(_get(cfg, "encode_columns")),
             model_one_hot_encoder_path=_to_path(_get(cfg, "model_one_hot_encoder_path")),
-            status_file=_to_path(status_file),
+            status_file=_to_path(STATUS_FILE),
             schema=schema,
         )
 
     def get_data_transformation_config(self) -> DataTransformationConfig:
         cfg = _get(self.config, "data_transformation")
 
-        status_file = _get(cfg, "status_file") if (isinstance(cfg, dict) and "status_file" in cfg) or hasattr(cfg, "status_file") else _get(cfg, "STATUS_FILE")
-
         train_test_path = _to_path(_get(cfg, "train_test_path"))
         create_directories([train_test_path])
 
-        schema_origin = self.schema.COLUMNS
-        additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
-        remove_col = self.schema.REMOVE_ENCODED_COLUMNS
-        schema = {**schema_origin, **additional_schema}
-        for col in remove_col:
-                schema.pop(col, None)
+        schema = self.get_final_schema()
 
         return DataTransformationConfig(
             input_path=_to_path(_get(cfg, "input_path")),
             train_test_path=train_test_path,
-            status_file=_to_path(status_file),
+            status_file=_to_path(STATUS_FILE),
+            schema=schema,
+        )
+    
+    def get_data_resampling_config(self) -> DataResamplingConfig:
+        cfg = _get(self.config, "data_resampling")
+
+        output_path = _to_path(_get(cfg, "output_path"))
+        create_directories([output_path])
+
+        schema = self.get_final_schema()
+
+        return DataResamplingConfig(
+            input_x_path=_to_path(_get(cfg, "input_x_path")),
+            input_y_path=_to_path(_get(cfg, "input_y_path")),
+            output_path=output_path,
+            status_file=_to_path(STATUS_FILE),
             schema=schema,
         )
 
@@ -149,6 +161,12 @@ class ConfigurationManager:
 
         sw_path = _to_path(sw_raw) if sw_raw else None
 
+        param_grid: Dict[str, Any] = {}
+        if (isinstance(self.params, dict) and "XGBoost" in self.params) or hasattr(self.params, "XGBoost"):
+            xgb_params = _get(self.params, "XGBoost")
+            if (isinstance(xgb_params, dict) and "param_grid" in xgb_params) or hasattr(xgb_params, "param_grid"):
+                param_grid = _get(xgb_params, "param_grid")
+
         return ModelTrainerConfig(
             root_dir=root_dir,
             X_train_path=_to_path(_get(cfg, "X_train_path")),
@@ -156,7 +174,9 @@ class ConfigurationManager:
             y_train_path=_to_path(_get(cfg, "y_train_path")),
             y_test_path=_to_path(_get(cfg, "y_test_path")),
             sample_weight_train_path=sw_path,
-            model_name=_get(cfg, "model_name"),
+            model_path=_to_path(_get(cfg, "model_path")),
+            features_path=_to_path(_get(cfg, "features_path")),
+            param_grid=param_grid,
         )
 
 

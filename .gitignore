@@ -27,12 +27,9 @@ api/deployments/nginx/certs/
 
 # SSL Certificates
 api/deployments/nginx/certs/
-
-#Environement files
 .venv/
 venv/
 .env
-.vscode/
 
 # macOS
 .DS_Store
@@ -52,3 +49,8 @@ notebooks/*.csv
 notebooks/logs/logs.log
 logs/*.log
 
+#MlFlow
+mlruns/
+
+#VS Code settings
+.vscode/

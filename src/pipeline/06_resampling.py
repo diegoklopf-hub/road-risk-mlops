@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -14,33 +13,31 @@ parent_folder = str(Path(__file__).parent.parent.parent)
 sys.path.append(parent_folder)
 
 from src.config_manager import ConfigurationManager
-from src.data_processing.data_transformation import DataTransformation
+from src.data_processing.data_resampling import DataResampling
 from src.custom_logger  import logger
 from src.common_utils import is_last_status_ok
 from src.config import STATUS_FILE
 
-STAGE_NAME = "05 - Data Transformation stage"
+STAGE_NAME = "06 - Data Resampling stage"
 
-class DataTransformationTrainingPipeline:
+class DataResamplingTrainingPipeline:
     def __init__(self):
         pass
 
     def main(self):
         config = ConfigurationManager()
-        data_transformation_config = config.get_data_transformation_config()
+        data_resampling_config = config.get_data_resampling_config()
         if not is_last_status_ok(STATUS_FILE):
-            raise RuntimeError("Previous stage status is not OK. Aborting data transformation.")
+            raise RuntimeError("Previous stage status is not OK. Aborting resampling.")
 
-        data_transformation = DataTransformation(config = data_transformation_config)
-        X_train, X_test, _, _ = data_transformation.train_test_splitting()
-        X_train, X_test = data_transformation.normalize(X_train, X_test)
-        data_transformation.features_selection(X_train, X_test)
-        data_transformation.check_transformation_outputs()
+        data_resampling = DataResampling(config = data_resampling_config)
+        data_resampling.resample()
+        
 
 if __name__ == '__main__':
     try:
         logger.info(f">>>>> stage {STAGE_NAME} started <<<<<")
-        obj =  DataTransformationTrainingPipeline()
+        obj =  DataResamplingTrainingPipeline()
         obj.main()
         logger.info(f">>>>> stage {STAGE_NAME} completed <<<<<\n\nx=======x")
     except Exception as e:

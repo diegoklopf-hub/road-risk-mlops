@@ -77,4 +77,40 @@ def load_json(path: Path) -> ConfigBox:
     return ConfigBox(content)
 
 
+@ensure_annotations
+def reset_status_file(path: Path):
+    """Clear the status file at pipeline start."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("")
+    logger.info(f"status file reset: {path}")
+
+
+@ensure_annotations
+def append_status(path: Path, phase: str, ok: bool, details: str | None = None):
+    """Append a schema/structure check result to the status file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a") as f:
+        f.write(f"{phase}: Validation status: {ok}\n")
+        if details:
+            f.write(f"{details}\n")
+    logger.info(f"status updated: {phase} -> {ok}")
+
+
+@ensure_annotations
+def is_last_status_ok(path: Path) -> bool:
+    """Return True when the last recorded status is OK or file is empty/missing."""
+    if not path.exists():
+        return True
+
+    content = path.read_text().strip().splitlines()
+    if not content:
+        return True
+
+    for line in reversed(content):
+        if "Validation status:" in line:
+            return line.split("Validation status:", 1)[1].strip().lower() == "true"
+
+    return True
+
+
 

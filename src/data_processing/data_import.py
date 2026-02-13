@@ -3,6 +3,9 @@ import os
 from src.data_processing.check_structure import check_existing_folder
 from src.entity import DataImportConfig
 from src.custom_logger import logger
+from pathlib import Path
+from src.common_utils import append_status
+from src.config import STATUS_FILE
 
 """
 Module for importing raw data files from a remote source and saving them locally.
@@ -85,6 +88,23 @@ class DataImport:
             csv_files,
             self.config.source_url,
     )
+
+    def check_imported_files(self):
+        expected_files = []
+        for item in self.config.resources:
+            if self.config.from_year <= item["year"] <= self.config.to_year:
+                expected_files.append(
+                    Path(self.config.raw_data_relative_path)
+                    / f"{item['subgroup']}-{item['year']}.csv"
+                )
+
+        missing = [str(p) for p in expected_files if not p.exists()]
+        ok = len(missing) == 0
+        details = f"Missing files: {missing}" if missing else None
+        append_status(STATUS_FILE, "DATA IMPORT", ok, details)
+        if not ok:
+            raise FileNotFoundError(details)
+
 
 
                 

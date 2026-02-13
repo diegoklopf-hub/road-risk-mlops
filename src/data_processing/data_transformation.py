@@ -5,6 +5,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from src.custom_logger import logger
 from src.entity import DataTransformationConfig
+from pathlib import Path
+import pandas as pd
+from src.common_utils import append_status
+from src.config import STATUS_FILE
+from src.data_processing.schema_manager import SchemaManager
+
 
 
 """Data transformation utilities.
@@ -118,9 +124,29 @@ class DataTransformation:
         logger.info(f"Feature selection: {X_train.shape[1]} -> {len(X_cols_used_for_prediction)} columns remaining.")
         X_train = X_train[X_cols_used_for_prediction]
         X_test = X_test[X_cols_used_for_prediction]
-        X_train.to_csv(os.path.join(self.config.train_test_path, "X_train_feature_selected.csv"), index = False)
-        X_test.to_csv(os.path.join(self.config.train_test_path, "X_test_feature_selected.csv"), index = False)
+        X_train.to_csv(os.path.join(self.config.train_test_path, "X_train.csv"), index = False)
+        X_test.to_csv(os.path.join(self.config.train_test_path, "X_test.csv"), index = False)
         logger.info(f"X_train shape: {X_train.shape}")
         logger.info(f"X_test shape: {X_test.shape}")
+
+    def check_transformation_outputs(self):
+        output_x_train = Path(self.config.train_test_path) / "X_train.csv"
+        output_x_test = Path(self.config.train_test_path) / "X_test.csv"
+        if not output_x_train.exists() or not output_x_test.exists():
+            details = f"Missing outputs: {[str(p) for p in [output_x_train, output_x_test] if not p.exists()]}"
+            append_status(STATUS_FILE, "DATA TRANSFORMATION", False, details)
+            raise FileNotFoundError(details)
+
+        all_cols = set(pd.read_csv(output_x_train).columns)
+        is_schema_valid = SchemaManager(self.config.schema).check_schema(
+            all_cols,
+            self.config.status_file,
+            "TRANSFORMATION",
+            ignore_calib=True,
+            filter_use_for_fit=True,
+        )
+        if not is_schema_valid:
+            raise ValueError("Schema validation failed during transformation.")
+
 
         

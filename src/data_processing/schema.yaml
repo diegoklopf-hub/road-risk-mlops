@@ -389,7 +389,7 @@ ADDITIONAL_ENCODED_COLUMNS:
     type: int64
     description: "Score continue [0-100] du niveau de gravite de l'accident" 
     normalized: False
-    use_for_fit: True
+    use_for_fit: False
     category: TARGET
 
 REMOVE_ENCODED_COLUMNS:

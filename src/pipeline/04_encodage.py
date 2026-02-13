@@ -8,6 +8,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.custom_logger import logger
 from src.config_manager import ConfigurationManager
 from src.data_processing.data_encoding import DataEncodage
+from src.common_utils import is_last_status_ok
+from src.config import STATUS_FILE
 
 STAGE_NAME = "04 - Encodage stage"
 
@@ -17,6 +19,8 @@ class DataEncodagePipeline:
         self.config = ConfigurationManager()
 
     def run(self):
+        if not is_last_status_ok(STATUS_FILE):
+            raise RuntimeError("Previous stage status is not OK. Aborting encodage.")
         data_encodage_config = self.config.get_data_encodage_config()
         data_encodage = DataEncodage(config=data_encodage_config)
 

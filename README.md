@@ -16,22 +16,25 @@
 
 ## Aperçu
 
-Pipeline ML prêt pour la production pour l'analyse des données d'accidents, suivant une architecture modulaire avec orchestration pilotée par configuration, validation de schéma stricte et surveillance centralisée.
+Ce projet fournit un pipeline MLOps complet pour predire la gravite des accidents routiers dans un perimetre cible. Il alimente une interface graphique utilisee par une caserne de pompiers situee a Bassens (33, Gironde) afin d'identifier les routes les plus a risque dans les prochaines heures et de visualiser une timeline de risque sur 24h. Le systeme s'appuie sur des donnees BAAC (Bases de données annuelles des accidents corporels de la circulation routière) de 2019 a 2024, nettoyees et encodees, puis entraine un modele XGBoost pour produire des predictions contextualisees.
+Les prédictions sont calculées à partir d'input combinant des variables structurelles (vitesse autorisee, largeur, infrastructure, etc.) definies et mises a jour par l'utilisateur via l'interface, avec des donnees temps reel (https://openweathermap.org/) et un contexte temporel (date/heure).
 
 ## Objectifs
 
-Prédire les zones de danger au sein d'un secteur géographique restreint (périmètre d'intervention d'une caserne de pompiers) avec analyse temporelle configurable. Le système enrichit les données BAAC avec des informations en temps réel (conditions météorologiques, luminosité) et caractéristiques des infrastructures routières locales.
-
-## Caractéristiques Principales
-
-- **Pipeline Piloté par Configuration** : Configuration centralisée via `config.yaml`
-- **Validation de Schéma Stricte** : Vérifications de qualité aux étapes critiques via `schema.yaml`
-- **Journalisation Centralisée** : Logger personnalisé avec répertoire dédié `logs/logs.log`
-- **Architecture Modulaire** : Séparation entre `src/` et `pipeline/`
+- Fournir a la caserne de Bassens une prediction du risque d'accident grave dans les prochaines heures, localisee par route.
+- Remonter dans l'interface graphique le top 5 des routes avec la probabilite la plus elevee d'accident grave.
+- Generer une timeline des risques sur 24h pour aider a la planification des moyens.
+- Combiner des variables structurelles (vitesse autorisee, largeur, infrastructure, etc.) definies et mises a jour par l'utilisateur via l'interface, avec des donnees temps reel (meteo) et un contexte temporel (date/heure) pour affiner les predictions.
 
 ## Prérequis
-- Python 3.9+
-- Environnement virtuel (venv/conda)
+
+- **Python 3.9+**
+- **Environnement virtuel** (venv/conda)
+- **Certificats SSL Nginx**
+  - `deployments/nginx/certs/nginx.crt`
+  - `deployments/nginx/certs/nginx.key`
+- **Clé API météo (OpenWeather)**
+   `OPENWEATHER_API_KEY="......"` - (/.env)
 
 ## Démarrage Rapide
 
@@ -42,23 +45,112 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Exécution
+### Exécution (Docker)
 ```bash
-# Pipeline complet
-python .\src\pipeline\00_pipeline.py
+# Démarrer le projet (build + containers)
+make start-project
+
+# Arrêter le projet
+make stop-project
+
+# Reset complet (supprime containers orphelins, rebuild)
+make reset-project
+
+```
+
+### Pipeline
+```bash
+# Pipeline complet (hors Docker)
+make pipeline
 
 # Ou étapes individuelles
-python .\src\pipeline\01_data_import.py
-python .\src\pipeline\02_data_clean.py
-python .\src\pipeline\03_merge.py
-python .\src\pipeline\04_encodage.py
-python .\src\pipeline\05_data_transformation.py
+python src/pipeline/01_data_import.py
+python src/pipeline/02_data_clean.py
+python src/pipeline/03_merge.py
+python src/pipeline/04_encodage.py
+python src/pipeline/05_data_transformation.py
+python src/pipeline/06_resampling.py
+python src/pipeline/07_model_trainer.py
+python src/pipeline/08_model_evaluation.py
+```
+
+### Tests
+```bash
+# Tests API (sortie verbose avec prints)
+make test
+
+# Tests API (sortie verbose sans captures stdout)
+make test-debug
 ```
 
 Vérifier les logs :
 ```bash
 cat logs/logs.log
 ```
+
+## Caractéristiques Principales
+
+- **Pipeline Piloté par Configuration** : Configuration centralisée via `config.yaml`
+- **Validation de Schéma Stricte** : Vérifications de qualité aux étapes critiques via `schema.yaml`
+- **Journalisation Centralisée** : Logger personnalisé avec répertoire dédié `logs/logs.log`
+- **Architecture Modulaire** : Séparation entre `src/` et `pipeline/`
+
+## 🛡️ Architecture de Validation des Données
+
+### Schema (src/data_processing/schema.yaml)
+
+Schéma de données centralisé définissant type, description et utilisation de chaque colonne :
+
+```yaml
+COLUMNS:
+  Num_Acc:
+    type: int64
+    description: "Numéro d'identifiant de l'accident"
+    normalized: False
+    use_for_fit: False # Exclut l'ID des calculs
+  an:
+    type: int64
+    description: "Année de l'accident"
+    normalized: True
+    use_for_fit: True  # Utilisé pour l'entraînement
+```
+
+### Rapport d'Exécution (data/status.txt)
+
+Le fichier est reinitialise au demarrage du pipeline et complete a chaque etape. En cas de divergence, le pipeline s'arrete (fail-fast) :
+
+```
+AGGREGATE:Validation status: ✅ True
+```
+
+Ou en cas d'erreur :
+
+```
+Missing columns in DataFrame: {"catu","place"} 
+Extra columns in DataFrame: {"Couleur"} 
+MERGE:Validation status: ❌ False
+```
+
+### Fonctionnalités Clés
+
+1. **Contrôle d'Intégrité** : Vérification des types et colonnes obligatoires
+2. **Configuration du Preprocessing** : Identification des colonnes à normaliser
+3. **Sélection Dynamique des Features** : Ajustement des variables d'entraînement via YAML
+
+## Modèle et Artefacts
+
+### Parametres de Model Training
+
+Le `param_grid` XGBoost est definie dans `src/models/params.yaml` et chargee par le pipeline au moment du training.
+
+### Artefacts attendus
+
+Au demarrage, l'API charge le modele et la liste des features. Si un artefact manque, l'API echoue au startup.
+Artefacts requis (configures dans `config.yaml`) :
+
+- `model/best_model.joblib`
+- `model/features.joblib`
+- `model/one_hot_encoder.joblib`
 
 ## API S.A.V.E.R. (saver_app)
 
@@ -89,6 +181,8 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
   "timestamp": "2026-02-10T22:00:00Z"
 }
 ```
+- Le champ `cities` doit etre dans la liste `secteur_insee` du `config.yaml`.
+- `timestamp` est attendu en UTC au format `YYYY-MM-DDTHH:00:00Z`.
 - Réponse exemple :
 ```json
 {
@@ -105,21 +199,40 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
 }
 ```
 
-## Structure du Projet
+**POST /api/risk-timeline**
+- Retourne une timeline de risque basee sur les villes de `secteur_insee` et l'heure courante UTC.
+- Reponse type :
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "timestamp": "2026-02-10T22:00:00Z",
+      "risk_index": 42.1,
+      "risk_level": 3,
+      "risk_label": "Moderate",
+      "temperature_c": 12.3,
+      "description": "clear sky",
+      "daylight": true
+    }
+  ]
+}
+```
 
+## Structure du Projet
 ```
 SEP25-BMLE-MLOPS-ACCIDENTS/
 ├── src/                           
 │   ├── data_processing/           # Modules de gestion des données
 │   │   ├── clean/                 # Nettoyage par type de données
 │   │   ├── engineering/           # Feature engineering
-│   │   ├── check_structure.py
-│   │   ├── data_import.py
-│   │   ├── data_clean.py
-│   │   ├── data_merge.py
-│   │   ├── data_encoding.py
-│   │   ├── data_transformation.py
-│   │   ├── schema.yaml
+│   │   ├── check_structure.py     # Verifs fichiers/colonnes
+│   │   ├── data_import.py         # Import des donnees brutes
+│   │   ├── data_clean.py          # Nettoyage des donnees
+│   │   ├── data_merge.py          # Fusion des tables
+│   │   ├── data_encoding.py       # Encodage des variables
+│   │   ├── data_transformation.py # Split/normalisation/features
+│   │   ├── schema.yaml            # Schema de reference
 │   │   └── __init__.py
 │   ├── models/                    # Modules ML et prédictions
 │   │   ├── model_trainer.py
@@ -133,8 +246,18 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   │   ├── 03_merge.py
 │   │   ├── 04_encodage.py
 │   │   ├── 05_data_transformation.py
+│   │   ├── 06_resampling.py
+│   │   ├── 07_model_trainer.py
+│   │   ├── 08_model_evaluation.py
 │   │   └── __init__.py
-│   ├── app/                       # Application
+│   ├── api/                       # API FastAPI
+│   │   ├── feature_encoder.py     # Encodage des features
+│   │   ├── feature_time.py        # Features temporelles
+│   │   ├── feature_weather.py     # Features meteo
+│   │   ├── inference_engine.py    # Orchestration inference
+│   │   ├── main.py                # FastAPI app
+│   │   ├── prediction.py          # Logique de prediction
+│   │   └── weather.py             # Client meteo
 │   ├── config.yaml                # Configuration des step de la pipeline
 │   ├── config.py                  # Configuration des paramètres du projet
 │   ├── config_manager.py          # Gestionnaire de configuration
@@ -142,10 +265,11 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   ├── entity.py                  # Définition des entités de données
 │   └── common_utils.py            # Fonctions utilitaires communes
 ├── data/                          # Répertoire des données
-│   ├── raw/                       # Données brutes (2019-2024)
-│   ├── processed/                 # Données nettoyées
-│   ├── processed_merged/          # Données fusionnées et encodées
-│   ├── train_test/                # Ensembles d'entraînement/test
+│   ├── 00_raw/                    # Données brutes (2019-2024)
+│   ├── 01_processed/              # Données nettoyées
+│   ├── 02_processed_merged/       # Données fusionnees et encodees
+│   ├── 03_features_selected/      # Ensembles train/test et features selectionnees
+│   ├── 04_resampled/              # Donnees re-equilibrees
 │   └── status.txt
 ├── logs/                          # Journaux d'exécution
 ├── models/                        # Artefacts de modèle
@@ -156,46 +280,3 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 ├── .gitignore                     
 └── README.md                      
 ```
-
-## 🛡️ Architecture de Validation des Données
-
-### Schema (src/data_processing/schema.yaml)
-
-Schéma de données centralisé définissant type, description et utilisation de chaque colonne :
-
-```yaml
-COLUMNS:
-  Num_Acc:
-    type: int64
-    description: "Numéro d'identifiant de l'accident"
-    normalized: False
-    use_for_fit: False # Exclut l'ID des calculs
-  an:
-    type: int64
-    description: "Année de l'accident"
-    normalized: True
-    use_for_fit: True  # Utilisé pour l'entraînement
-```
-
-### Rapport d'Exécution (data/status.txt)
-
-Chaque étape compare le DataFrame au schéma. En cas de divergence, le pipeline s'arrête (fail-fast) :
-
-```
-AGGREGATE:Validation status: ✅ True
-```
-
-Ou en cas d'erreur :
-
-```
-Missing columns in DataFrame: {"catu","place"} 
-Extra columns in DataFrame: {"Couleur"} 
-MERGE:Validation status: ❌ False
-```
-
-### Fonctionnalités Clés
-
-1. **Contrôle d'Intégrité** : Vérification des types et colonnes obligatoires
-2. **Configuration du Preprocessing** : Identification des colonnes à normaliser
-3. **Sélection Dynamique des Features** : Ajustement des variables d'entraînement via YAML
-

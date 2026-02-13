@@ -6,6 +6,10 @@ from src.data_processing.clean.clean_locations import clean_lieux
 from src.data_processing.clean.clean_users import clean_usagers
 from src.data_processing.clean.clean_vehicles import clean_vehicles
 from src.entity import DataCleanConfig
+from pathlib import Path
+from src.common_utils import append_status
+from src.config import STATUS_FILE
+
 
 
 """Utilities for importing and running cleaning steps on raw CSV accident data.
@@ -131,3 +135,20 @@ class DataClean:
         logger.info("Cleaning 'vehicules' data...")
         df_vehicules = clean_vehicles(df_vehicules, self.config.out_data_relative_path, self.config.cluster_cat_vehicule)
         check_df(df_vehicules)
+
+    def check_cleaned_files(self):
+        expected_files = [
+            Path(self.config.out_data_relative_path) / "caracteristiques.csv",
+            Path(self.config.out_data_relative_path) / "lieux.csv",
+            Path(self.config.out_data_relative_path) / "usagers.csv",
+            Path(self.config.out_data_relative_path) / "vehicules.csv",
+        ]
+        missing = [str(p) for p in expected_files if not p.exists()]
+        ok = len(missing) == 0
+
+        details = None
+        if missing:
+            details = f"Missing cleaned files: {missing}"
+        append_status(STATUS_FILE, "DATA CLEAN", ok, details)
+        if not ok:
+            raise FileNotFoundError(details)

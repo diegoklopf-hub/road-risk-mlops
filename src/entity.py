@@ -60,6 +60,15 @@ class DataTransformationConfig:
     status_file: Path
     schema: Dict[str, Any]
 
+
+@dataclass(frozen=True)
+class DataResamplingConfig:
+    input_x_path: Path
+    input_y_path: Path
+    output_path: Path
+    status_file: Path
+    schema: Dict[str, Any]
+
 # =========================
 # MODEL TRAINER
 # =========================
@@ -72,7 +81,9 @@ class ModelTrainerConfig:
     y_train_path: Path
     y_test_path: Path
     sample_weight_train_path: Path | None
-    model_name: str
+    model_path: Path
+    features_path: Path
+    param_grid: Dict[str, Any]
 
 # =========================
 # MODEL EVALUATION

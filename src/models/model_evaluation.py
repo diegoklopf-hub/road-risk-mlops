@@ -9,8 +9,6 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from src.entity import ModelEvaluationConfig
 from src.common_utils import save_json
 
-
-
 class ModelEvaluation:
     def __init__(self, config: ModelEvaluationConfig):
         self.config = config
@@ -54,7 +52,7 @@ class ModelEvaluation:
                 # Register the model
                 # There are other ways to use the Model Registry, which depends on the use case.
 
-                mlflow.sklearn.log_model(model, "model", registered_model_name="ElasticnetModel")
+                mlflow.sklearn.log_model(model, "model", registered_model_name="XGBoostRegressor")
 
             else:
                 mlflow.sklearn.log_model(model, "model")           

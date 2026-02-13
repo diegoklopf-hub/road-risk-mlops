@@ -8,6 +8,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.custom_logger import logger
 from src.config_manager import ConfigurationManager
 from src.data_processing.data_merge import DataMerge
+from src.common_utils import is_last_status_ok
+from src.config import STATUS_FILE
 
 STAGE_NAME = "03 - Merge stage"
 
@@ -17,6 +19,8 @@ class DataMergePipeline:
         self.config = ConfigurationManager()
 
     def run(self):
+        if not is_last_status_ok(STATUS_FILE):
+            raise RuntimeError("Previous stage status is not OK. Aborting merge.")
         cfg = self.config.get_data_merge_config()
         dm = DataMerge(cfg)
         dm.merge_by_usager()

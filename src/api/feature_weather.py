@@ -1,5 +1,6 @@
 import pandas as pd
 
+from src.custom_logger import logger
 from weather import get_weather
 from feature_time import encode_date_time
 
