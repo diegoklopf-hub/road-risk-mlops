@@ -5,7 +5,7 @@ import os
 import joblib
 import pandas as pd
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List
@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 from inference_engine import model_prediction
 from src.common_utils import read_yaml
+from basicauth import authenticate
 
 # -------------------------------------------------------------------
 # Configuration
@@ -81,7 +82,7 @@ class PredictionInputV2(BaseModel):
 # -------------------------------------------------------------------
 
 @app.get("/api/v1/health")
-def health_check():
+def health_check(auth: None = Depends(authenticate)):
     return {
         "status": "ok",
         "model_loaded": True,
@@ -95,7 +96,7 @@ def health_check():
 # -------------------------------------------------------------------
 
 @app.post("/api/v1/predict")
-def predict(payload: AccidentFeatures):
+def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):
     try:
         input_dict = payload.features
 
@@ -135,7 +136,7 @@ def predict(payload: AccidentFeatures):
         )
     
 @app.post("/api/v2/predict")
-async def predict_v2(payload: PredictionInputV2):
+async def predict_v2(payload: PredictionInputV2, auth: None = Depends(authenticate)):
     """
     V2 Endpoint: Receives business requirements and orchestrates transformation before inference.
     """
@@ -155,7 +156,7 @@ async def predict_v2(payload: PredictionInputV2):
     return preds
 
 @app.post("/api/risk-timeline")
-async def risk_timeline():
+async def risk_timeline(auth: None = Depends(authenticate)):
     """
     Endpoint to retrieve the risk timeline from business requirements.
     """
@@ -182,7 +183,7 @@ async def risk_timeline():
     return timeline_data
 
 @app.get("/api/roads")
-def get_roads():
+def get_roads(auth: None = Depends(authenticate)):
     logger.info(f">>>>> Call GET /api/roads called <<<<<")
     load_file_path = path_prefix+API_CFG.road_secteur_path
     if not Path(load_file_path).exists():
@@ -194,7 +195,7 @@ def get_roads():
     return df.to_dict(orient="records")
 
 @app.put("/api/roads")
-def put_roads(rows: list[dict]):
+def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
     logger.info(f">>>>> Call PUT /api/roads called <<<<<")
     df = pd.DataFrame(rows)
     df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
@@ -207,5 +208,13 @@ def put_roads(rows: list[dict]):
 # -------------------------------------------------------------------
 
 @app.get("/")
-def health_check_api():
+def health_check_api(auth: None = Depends(authenticate)):
     return FileResponse(TEMPLATE_PATH)
+
+# Authentication endpoint
+@app.post("/login")
+def login_endpoint(current_user: None = Depends(authenticate)):
+    """
+    Valide username/password via Basic Auth.
+    """
+    return JSONResponse(content={"message": f"Connexion réussie {current_user}"}, status_code=200)

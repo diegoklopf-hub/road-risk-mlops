@@ -33,6 +33,25 @@ Les prédictions sont calculées à partir d'input combinant des variables struc
 - **Certificats SSL Nginx**
   - `deployments/nginx/certs/nginx.crt`
   - `deployments/nginx/certs/nginx.key`
+- **Création des utilisateurs**
+
+Le script **src/generate_userdb.py** initialise un dictionnaire users contenant les utilisateurs et leurs mots de passe hachés avec Argon2 :
+
+```json
+users = {
+    "admin": pwd_context.hash("XXXXX")  # remplace "XXXXX" par le mot de passe souhaité
+}
+```
+
+- Clé : nom d’utilisateur
+- Valeur : mot de passe haché avec Argon2
+
+**Important** : après avoir renseigné le mot de passe de l’utilisateur, lancer la commande :
+```bash
+make user-init
+```
+Cette commande exécute le script et crée le fichier users_db.json avec les mots de passe hachés, prêt à être utilisé par l’application.
+
 - **Clé API météo (OpenWeather)**
    `OPENWEATHER_API_KEY="......"` - (/.env)
 
@@ -74,13 +93,22 @@ python src/pipeline/07_model_trainer.py
 python src/pipeline/08_model_evaluation.py
 ```
 
-### Tests
+### Tests unitaires
 ```bash
 # Tests API (sortie verbose avec prints)
-make test
+make unit-test
 
 # Tests API (sortie verbose sans captures stdout)
-make test-debug
+make unit-test-debug
+```
+
+## Test d'intégration
+```bash
+# Tests API (sortie verbose avec prints)
+make int-test
+
+# Tests API (sortie verbose sans captures stdout)
+make int-test-debug
 ```
 
 Vérifier les logs :

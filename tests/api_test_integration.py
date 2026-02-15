@@ -1,8 +1,11 @@
+import os
+import requests
+from requests.auth import HTTPBasicAuth
 import sys
 from pathlib import Path
 
-from fastapi.testclient import TestClient
 from datetime import datetime, timedelta, timezone
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 API_DIR = PROJECT_ROOT / "src" / "api"
@@ -13,11 +16,15 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 import main as api_main  # noqa: E402
 
-client = TestClient(api_main.app)
 
+BASE_URL = "https://127.0.0.1"
 
 def test_health_check():
-    response = client.get("/api/v1/health")
+    response = requests.get(
+        f"{BASE_URL}/api/v1/health",
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
@@ -26,9 +33,11 @@ def test_health_check():
 
 
 def test_predict_v1_missing_features():
-    response = client.post(
-        "/api/v1/predict",
+    response = requests.post(
+        f"{BASE_URL}/api/v1/predict",
         json={"features": {"dummy": 1}},
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
     )
     assert response.status_code == 400
     assert "Missing features" in response.json()["detail"]
@@ -36,9 +45,11 @@ def test_predict_v1_missing_features():
 
 def test_predict_v1_success():
     features = {name: 0 for name in api_main.feature_names}
-    response = client.post(
-        "/api/v1/predict",
+    response = requests.post(
+        f"{BASE_URL}/api/v1/predict",
         json={"features": features},
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
     )
     assert response.status_code == 200
     payload = response.json()
@@ -50,13 +61,14 @@ def test_predict_v2_success():
 
     next_hour = (datetime.now(timezone.utc) + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
     timestamp_iso = next_hour.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    response = client.post(
-        "/api/v2/predict",
-        json={
+    response = requests.post(
+        f"{BASE_URL}/api/v2/predict",
+         json={
             "cities": ["Bassens", "Sainte-Eulalie", "Carbon-Blanc"],
             "timestamp": timestamp_iso,
         },
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
     )
     assert response.status_code == 200
     payload = response.json()
@@ -66,21 +78,24 @@ def test_predict_v2_success():
 
 
 def test_predict_v2_unknown_city():
-    response = client.post(
-        "/api/v2/predict",
+    response = requests.post(
+        f"{BASE_URL}/api/v2/predict",
         json={
             "cities": ["Unknown-City"],
             "timestamp": "2026-02-11T12:00:00Z",
         },
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
     )
     assert response.status_code == 400
     assert "Unknown cities" in response.json()["detail"]
 
 def test_predict_time_series():
-
-    response = client.post(
-        "/api/risk-timeline",
-        json={}
+    response = requests.post(
+        f"{BASE_URL}/api/risk-timeline",
+        json={},
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
     )
     assert response.status_code == 200
     payload = response.json()
@@ -95,6 +110,3 @@ def test_predict_time_series():
     assert "temperature_c" in first_item
     assert "description" in first_item
     assert "daylight" in first_item
-
-
-

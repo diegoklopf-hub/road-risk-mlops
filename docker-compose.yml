@@ -11,6 +11,7 @@ services:
     volumes:
       - ./logs:/app/logs:rw
       - ./data/ref:/data/ref/:rw
+      - ./data/secrets/users_db.json:/run/secrets/users_db:ro
     env_file:
       - .env
       

@@ -17,12 +17,21 @@ logs:
 status:
 	docker compose -p $(PROJECT_NAME) ps
 
-test:
-	pytest -v -s tests/test_api.py 
+unit-test:
+	pytest -v -s tests/api_test_unitaires.py 
 
-test-debug:
-	pytest -v tests/test_api.py 
+unit-test-debug:
+	pytest -v tests/api_test_unitaires.py 
+
+int-test:
+	pytest -v -s tests/api_test_integration.py 
+
+int-test-debug:
+	pytest -v tests/api_test_integration.py 
 
 pipeline:
 	python src/pipeline/00_pipeline.py
+
+user-init:
+	python src/generate_userdb.py
 
