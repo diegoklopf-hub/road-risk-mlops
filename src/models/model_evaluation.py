@@ -30,7 +30,7 @@ class ModelEvaluation:
 
         tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
-        with mlflow.start_run():
+        with mlflow.start_run(nested=True):
             predicted_qualities = model.predict(X_test)
 
             (rmse, mae, r2) = self.eval_metrics(y_test, predicted_qualities)
@@ -47,12 +47,12 @@ class ModelEvaluation:
             mlflow.log_metric("r2", r2)
 
             # Model registry does not work with file store
-            if tracking_url_type_store != "file":
+#            if tracking_url_type_store != "file":
 
                 # Register the model
                 # There are other ways to use the Model Registry, which depends on the use case.
 
-                mlflow.sklearn.log_model(model, "model", registered_model_name="XGBoostRegressor")
+#                mlflow.sklearn.log_model(model, "model")
 
-            else:
-                mlflow.sklearn.log_model(model, "model")           
+#            else:
+#                mlflow.sklearn.log_model(model, "model")           

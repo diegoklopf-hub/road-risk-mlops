@@ -1,0 +1,5 @@
+name: accidents-mlops
+
+entry_points:
+  main:
+    command: "python run_pipeline_mlflow.py"

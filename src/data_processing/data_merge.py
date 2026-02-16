@@ -205,7 +205,7 @@ class DataMerge:
         self.df = self.df.drop(columns=["secu_merged"]) 
         self.columns_aggregated.remove('secu_merged')
         self.columns_aggregated.extend(['securite_usager'])
-        msg = f"Drop the column {list(["secu_merged"])}"
+        msg = "Drop the column ['secu_merged']"
         print(msg)
         logger.info(msg)    
         logger.info('feature engineering completed successfully')   

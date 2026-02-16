@@ -144,8 +144,12 @@ class DataEncodage:
         try:
 
             all_cols = set(list(self.df.columns))
-            is_schema_valid = SchemaManager(self.config.schema).check_schema(all_cols,self.config.status_file,"ENCODAGE",ignore_calib=True)
-
+            is_schema_valid = SchemaManager(self.config.schema).check_schema(
+                all_cols,
+                self.config.status_file,
+                "ENCODAGE",
+                ignore_calib=True
+            )
             if not is_schema_valid:
                 raise ValueError(f"Schema validation failed: See {self.config.status_file} for details.")
             else:

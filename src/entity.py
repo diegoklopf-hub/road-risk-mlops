@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -45,7 +45,6 @@ class DataEncodeConfig:
     merged_data_encoded_path: Path
     encode_columns: List[str]
     model_one_hot_encoder_path: Path
-    schema: Dict[str, Any]
     status_file: Path
     schema: Dict[str, Any]
 
@@ -60,6 +59,9 @@ class DataTransformationConfig:
     status_file: Path
     schema: Dict[str, Any]
 
+# =========================
+# DATA RESAMPLING
+# =========================
 
 @dataclass(frozen=True)
 class DataResamplingConfig:
@@ -80,7 +82,7 @@ class ModelTrainerConfig:
     X_test_path: Path
     y_train_path: Path
     y_test_path: Path
-    sample_weight_train_path: Path | None
+    sample_weight_train_path: Optional[Path]
     model_path: Path
     features_path: Path
     param_grid: Dict[str, Any]

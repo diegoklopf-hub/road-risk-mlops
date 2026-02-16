@@ -1,56 +1,80 @@
-# Python
+############################
+# PYTHON
+############################
 __pycache__/
-src/__pycache__/
-src/entity/__pycache__/
-venv/
-
-# Logs
-pipeline.log
-logs/logs.log
-src/pipeline/logs/logs.log
+*.pyc
+*.pyo
+*.pyd
 *.log
+*.tmp
+*.swp
 
-# Data
-data/
-notebooks/Merge_address.csv
-
-# ML Models
-api/model/*.joblib
-api/model/*.pkl
-model/*.joblib
-
-# Docker & Deployment
-src/api/Dockerfile
-deployments/nginx/certs/nginx.crt
-deployments/nginx/certs/nginx.key
-api/deployments/nginx/certs/
-
-# SSL Certificates
-api/deployments/nginx/certs/
 .venv/
 venv/
-.env
+env/
+ENV/
 
-# macOS
+############################
+# ENV VARIABLES
+############################
+.env
+.env.*
+*.env
+
+############################
+# DATA (NE JAMAIS VERSIONNER)
+############################
+data/
+metrics/
+mlruns/
+*.csv
+
+############################
+# MODELS & ARTIFACTS
+############################
+models/
+model/
+api/model/
+*.joblib
+*.pkl
+*.onnx
+
+############################
+# NOTEBOOK OUTPUTS
+############################
+notebooks/*.csv
+notebooks/*.parquet
+
+############################
+# LOGS
+############################
+logs/
+*.log
+
+############################
+# DOCKER / CERTIFICATS
+############################
+deployments/nginx/certs/
+api/deployments/nginx/certs/
+*.crt
+*.key
+
+############################
+# MLFLOW
+############################
+mlruns/
+mlartifacts/
+
+############################
+# IDE
+############################
+.vscode/
+.idea/
 .DS_Store
 **/.DS_Store
 
-# Private authentication files
-deployments/nginx/certs/nginx.crt
-deployments/nginx/certs/nginx.key
-
-# Model artifacts
-model/*.joblib
-
-# Notebooks outputs files
-notebooks/*.csv
-
-# Logs
-notebooks/logs/logs.log
-logs/*.log
-
-#MlFlow
-mlruns/
-
-#VS Code settings
-.vscode/
+############################
+# CACHE
+############################
+.pytest_cache/
+.cache/

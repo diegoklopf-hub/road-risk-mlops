@@ -11,24 +11,11 @@ from src.config import STATUS_FILE
 Module for importing raw data files from a remote source and saving them locally.
 """
 
-def check_existing_data(file_path):
-    """Return True if it's OK to write `file_path`.
-
-    If the file already exists this function prompts the user whether to
-    overwrite. Returns True if the file does not exist or the user agrees
-    to overwrite; otherwise False.
-    """
-    if os.path.isfile(file_path):
-        while True:
-            response = input(f"Files already exist. Do you want to overwrite all existing files? (y/n): ")
-            if response.lower() == 'y':
-                return True
-            elif response.lower() == 'n':
-                return False
-            else:
-                print("Invalid response. Please enter 'y' or 'n'.")
-    else:
+def check_existing_data(output_file):
+    if os.path.exists(output_file):
+        print("Files exist → auto overwrite enabled")
         return True
+    return True
 
 def import_raw_data(raw_data_relative_path, from_year, to_year, csv_files, base_url):
     """Download raw CSV files for the given year range to `raw_data_relative_path`.
@@ -47,7 +34,7 @@ def import_raw_data(raw_data_relative_path, from_year, to_year, csv_files, base_
     # indicates whether the folder already exists; the current call here keeps
     # the existing behavior of creating the folder when needed.)
     if check_existing_folder(raw_data_relative_path):
-        os.makedirs(raw_data_relative_path)
+        os.makedirs(raw_data_relative_path, exist_ok=True)
 
     # download all the files
     overwrite = False

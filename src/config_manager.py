@@ -16,9 +16,6 @@ from src.entity import (
 
 
 def _get(cfg: Any, key: str):
-    """
-    Permet d'accéder à une config YAML chargée soit en dict, soit en objet (Box/namespace).
-    """
     if isinstance(cfg, dict):
         return cfg[key]
     return getattr(cfg, key)
@@ -29,10 +26,6 @@ def _to_path(p: Union[str, Path]) -> Path:
 
 
 def _normalize_cluster_map(cluster_map: Dict[Any, List[int]]) -> Dict[int, List[int]]:
-    """
-    YAML peut parser les clés numériques en str selon le loader.
-    On force int pour coller à Dict[int, List[int]].
-    """
     out: Dict[int, List[int]] = {}
     for k, v in cluster_map.items():
         out[int(k)] = list(v)
@@ -56,8 +49,9 @@ class ConfigurationManager:
         remove_col = self.schema.REMOVE_ENCODED_COLUMNS
         schema = {**schema_origin, **additional_schema}
         for col in remove_col:
-                schema.pop(col, None)
+            schema.pop(col, None)
         return schema
+
     # ---------------- DATA ---------------- #
 
     def get_data_import_config(self) -> DataImportConfig:
@@ -91,20 +85,13 @@ class ConfigurationManager:
             input_data_relative_path=_to_path(_get(cfg, "input_data_relative_path")),
             out_merged_data_relative_path=_to_path(_get(cfg, "out_merged_data_relative_path")),
             status_file=_to_path(STATUS_FILE),
-            all_schema=schema_columns
+            all_schema=schema_columns,
         )
 
     def get_data_encodage_config(self) -> DataEncodeConfig:
         cfg = _get(self.config, "data_encodage")
+
         schema = self.get_final_schema()
-
-
-        schema_origin = self.schema.COLUMNS
-        additional_schema = self.schema.ADDITIONAL_ENCODED_COLUMNS
-        remove_col = self.schema.REMOVE_ENCODED_COLUMNS
-        schema = {**schema_origin, **additional_schema}
-        for col in remove_col:
-                schema.pop(col, None)
 
         return DataEncodeConfig(
             merged_data_path=_to_path(_get(cfg, "merged_data_path")),
@@ -129,7 +116,7 @@ class ConfigurationManager:
             status_file=_to_path(STATUS_FILE),
             schema=schema,
         )
-    
+
     def get_data_resampling_config(self) -> DataResamplingConfig:
         cfg = _get(self.config, "data_resampling")
 
@@ -154,7 +141,6 @@ class ConfigurationManager:
         root_dir = _to_path(_get(cfg, "root_dir"))
         create_directories([root_dir])
 
-        # sample_weight optionnel
         sw_raw = None
         if (isinstance(cfg, dict) and "sample_weight_train_path" in cfg) or hasattr(cfg, "sample_weight_train_path"):
             sw_raw = _get(cfg, "sample_weight_train_path")
@@ -178,7 +164,6 @@ class ConfigurationManager:
             features_path=_to_path(_get(cfg, "features_path")),
             param_grid=param_grid,
         )
-
 
     def get_model_evaluation_config(self) -> ModelEvaluationConfig:
         cfg = _get(self.config, "model_evaluation")
