@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
-from src.models.model_evaluation import ModelEvaluation  # adapte si ton chemin est différent
+from src.models.model_evaluation import ModelEvaluation  
 from src.data_processing.schema_manager import SchemaManager
 from src.common_utils import append_status, is_last_status_ok
 from src.config import STATUS_FILE
