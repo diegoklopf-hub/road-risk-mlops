@@ -47,7 +47,7 @@ with mlflow.start_run(run_name="GLOBAL_PIPELINE_RUN") as parent:
             "-e","MLFLOW_TRACKING_URI=http://mlflow_server:5000",
             "-e",f"MLFLOW_PARENT_RUN_ID={parent_id}",
 
-            # MINIO CREDS (OBLIGATOIRE)
+            # MINIO credentials (required)
             "-e","AWS_ACCESS_KEY_ID=minio",
             "-e","AWS_SECRET_ACCESS_KEY=minio123",
             "-e","MLFLOW_S3_ENDPOINT_URL=http://minio:9000",

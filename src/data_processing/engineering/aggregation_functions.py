@@ -34,16 +34,16 @@ def categorize_accident(senc_series):
     # Sens opposé : au moins un véhicule en 1.0 et un en 2.0
     if (count_1 > 0) and (count_2 > 0):
         return 0
-    # Même sens : plusieurs véhicules dans le même sens (1.0 ou 2.0)    
+    # Same direction: multiple vehicles in the same direction (1.0 or 2.0)
     elif (count_1 > 1) or (count_2 > 1):
         return 1
-    # Un seul véhicule impliqué
+    # Single involved vehicle
     elif senc_series.shape[0] == 1:
         return 2
-    # Plusieurs véhicules avec senc=0.0 ou 3.0 ou -1
+    # Multiple vehicles with senc=0.0, 3.0, or -1
     elif (count_0 > 0) or (count_3 > 0) or (count_n1 > 0):
         return 3
-    # Autres cas
+    # Other cases
     else:
         return 4
 

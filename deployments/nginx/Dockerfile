@@ -1,14 +1,14 @@
-# Utilise l'image officielle Nginx stable
+# Use the official stable Nginx image
 FROM nginx:1.25.2-alpine
 
-# Copie de la configuration nginx personnalisée
+# Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copie des certificats SSL
+# Copy SSL certificates
 COPY certs/ /etc/nginx/certs
 
-# Exposition des ports
+# Expose ports
 EXPOSE 80 443
 
-# Commande par défaut
+# Default command
 CMD ["nginx", "-g", "daemon off;"]

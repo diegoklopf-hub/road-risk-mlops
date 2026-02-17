@@ -23,12 +23,12 @@ x-airflow-common: &airflow-common
     AIRFLOW__CELERY__WORKER_CONCURRENCY: "8"
     PYTHONPATH: /opt/airflow/dags
     GIT_PYTHON_REFRESH: "quiet"
+    HOST_PROJECT_ROOT: ${HOST_PROJECT_ROOT}
   deploy:
     resources:
       limits:
         cpus: '0.75'    # Limite à 75% d'un cœur CPU
         memory: 1024M   # Limite à 1 Go de RAM
-    # _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   networks:
     - saver_network
   volumes:

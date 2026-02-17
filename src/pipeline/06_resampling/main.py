@@ -4,11 +4,6 @@ import mlflow
 import os
 import time
 
-# MLflow config
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://mlflow_server:5000"))
-mlflow.set_experiment("GLOBAL_PIPELINE")
-parent_run_id = os.getenv("MLFLOW_PARENT_RUN_ID")
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -18,6 +13,7 @@ from src.custom_logger import logger
 from src.data_processing.data_resampling import DataResampling
 from src.common_utils import is_last_status_ok
 from src.config import STATUS_FILE
+from src.mlflow_parent import get_or_create_parent_run
 
 STAGE_NAME = "06 - Resampling stage"
 
@@ -41,12 +37,9 @@ class DataResamplingPipeline:
 
     def main(self):
 
-        # 🔵 reconnect parent pipeline OU debug local
-        if parent_run_id:
-            mlflow.start_run(run_id=parent_run_id)
-        else:
-            mlflow.start_run(run_name="debug_parent")
-
+        # 🔵 Reconnexion au parent run
+        parent_run_id = get_or_create_parent_run()
+        mlflow.start_run(run_id=parent_run_id)
         try:
             # 🟢 nested run for this stage
             with mlflow.start_run(run_name="06_resampling", nested=True):

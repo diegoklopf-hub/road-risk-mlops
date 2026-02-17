@@ -14,7 +14,7 @@ from prediction import build_top_predictions, make_predictions, score_to_risk_le
 # TODO
 # -------------------------------------------------------------------
 # - Replace placeholder factors with data-driven explanations.
-# - Add connection with password
+
 
 def is_docker():
     return os.environ.get('IS_DOCKER', 'false').lower() == 'true'
