@@ -1,7 +1,9 @@
 from collections import Counter
 import re
+import numpy as np
 import pandas as pd
 from src.custom_logger import logger
+
 
 def agg_cat_unique_with_count(cat_series, col_name=None):
     vals = cat_series.dropna().astype(str)
@@ -11,6 +13,7 @@ def agg_cat_unique_with_count(cat_series, col_name=None):
     sorted_items = sorted(counter.items(), key=lambda x: x[0])
     joined_vals = "_".join(f"{modalite}({nb})" for modalite, nb in sorted_items)
     return f"{col_name}_{joined_vals}" if col_name else joined_vals
+
 
 def categorize_accident(senc_series):
     """
@@ -31,7 +34,7 @@ def categorize_accident(senc_series):
     # Sens opposé : au moins un véhicule en 1.0 et un en 2.0
     if (count_1 > 0) and (count_2 > 0):
         return 0
-    # Même sens : plusieurs véhicules dans le même sens (1.0 ou 2.0)
+    # Même sens : plusieurs véhicules dans le même sens (1.0 ou 2.0)    
     elif (count_1 > 1) or (count_2 > 1):
         return 1
     # Un seul véhicule impliqué
@@ -43,6 +46,7 @@ def categorize_accident(senc_series):
     # Autres cas
     else:
         return 4
+
 
 def categorize_gender(sexe_series):
     """
@@ -62,65 +66,94 @@ def categorize_gender(sexe_series):
     count_0 = counts.get(0.0, 0)   # 0 – Inconnu
     count_1 = counts.get(1.0, 0)   # 1 – Homme
     count_2 = counts.get(2.0, 0)   # 2 – Femme
-
     return (count_1 * 0 + count_0 * 0.5 + count_2 * 1) / len(sexe_series)
 
 
-def extract_normalize(s=None):
-    """
-    Parse and normalize a string containing one or more tokens of the form
-    NAME(NUMBER) or NAME(NUMBER)_NAME(NUMBER)_... and return a pandas.Series
-    with normalized numeric proportions per NAME.
+# ---------------------------------------------------------------------------
+# Compiled regex (compiled once, not per call)
+# ---------------------------------------------------------------------------
+_PATTERN = re.compile(r'([A-Za-z0-9-]+)\((\d+)\)')
 
-    Examples:
-        'catv_17(1)_7(2)' -> {'catv17': 0.333, 'catv7': 0.667}
+
+def _parse_single(s: str) -> dict | None:
+    """
+    Parse one aggregated string like 'catv_17(1)_7(2)' into a dict of
+    normalized proportions: {'17': 0.333, '7': 0.667}.
+
+    Returns None on parse errors (same semantics as the original empty Series).
+    """
+    if not isinstance(s, str) or s == "NONE":
+        return None
+
+    s_clean = s.replace(" ", "")
+    matches = _PATTERN.findall(s_clean)
+
+    if not matches:
+        return None
+
+    # Integrity check: reconstructed vs original (after first '_')
+    reconstructed = "_".join(f"{name}({num})" for name, num in matches)
+    parts = s_clean.split('_', 1)
+    if len(parts) < 2 or reconstructed != parts[1]:
+        return None
+
+    if len(matches) == 1:
+        return {matches[0][0]: 1.0}
+
+    numbers = [int(num) for _, num in matches]
+    total = sum(numbers)
+    if total == 0:
+        return {name: 0.0 for name, _ in matches}
+    return {name: int(num) / total for name, num in matches}
+
+
+def expand_column_vectorized(series: pd.Series, col_prefix: str) -> pd.DataFrame:
+    """
+    Vectorized replacement for:
+        series.apply(extract_normalize).add_prefix(col_prefix + "_")
+
+    Instead of creating N pd.Series objects, we:
+    1. Parse all strings into lightweight dicts (list comprehension)
+    2. Build one DataFrame from the list of dicts (single allocation)
+    3. Fill NaN with 0 and add prefix
 
     Parameters
     ----------
-    s : str or None
-        Input string to parse.
+    series : pd.Series
+        Column of aggregated strings (e.g. 'catv_17(1)_7(2)').
+    col_prefix : str
+        Prefix for the resulting column names.
 
     Returns
     -------
-    pandas.Series
-        Series of normalized proportions, empty Series on parse errors.
+    pd.DataFrame
+        One column per unique category, values are normalized proportions.
     """
-    # Regular expression to capture name(number) pairs
-    try:
-        s = s.replace(" ", "")
-        matches = re.findall(r'([A-Za-z0-9-]+)\((\d+)\)', s)
-    except re.error as e:
-        logger.warning(f"Regex validation error: {e}")
+    # Step 1: Parse all rows into dicts — no pd.Series created per row
+    parsed = [_parse_single(s) for s in series.values]
+
+    # Step 2: Build DataFrame in one shot from list of dicts
+    # pd.DataFrame(list_of_dicts) is highly optimized internally
+    expanded = pd.DataFrame(parsed, index=series.index)
+
+    # Step 3: Fill NaN (categories absent for a given row) with 0
+    expanded = expanded.fillna(0.0)
+
+    # Step 4: Prefix columns
+    expanded.columns = [f"{col_prefix}_{c}" for c in expanded.columns]
+
+    return expanded
+
+
+# ---------------------------------------------------------------------------
+# Keep original extract_normalize for backward compatibility if needed
+# ---------------------------------------------------------------------------
+def extract_normalize(s=None):
+    """
+    Original function kept for backward compatibility.
+    Prefer expand_column_vectorized() for batch processing.
+    """
+    result = _parse_single(s)
+    if result is None:
         return pd.Series()
-
-    # No matches -> return empty Series
-    if not matches:
-        print(f"No 'name(number)' pattern detected in: '{s}'")
-        return pd.Series()
-
-    # Reconstruct string from matches to ensure full coverage
-    reconstructed = "_".join([f"{name}({num})" for name, num in matches])
-    # Compare with the original substring (after first underscore) used in this dataset
-    if f"{reconstructed}" != s.split('_', 1)[1]:
-        print(f"The string '{s}' contains uncaptured characters.")
-        print(f"=>  '{reconstructed}'")
-        print(f"=> '{s.split('_', 1)[1]}'")
-        return pd.Series()
-
-    # Single match -> return series with value 1
-    if len(matches) == 1:
-        name, _ = matches[0]
-        return pd.Series({name: 1})
-
-    # Multiple matches -> normalize numeric parts
-    if len(matches) > 1:
-        try:
-            numbers = [int(num) for _, num in matches]
-            total = sum(numbers)
-            result = {}
-            for name, num in matches:
-                result[name] = int(num) / total if total != 0 else 0
-            return pd.Series(result)
-        except ValueError:
-            logger.warning(f"Unable to convert '{num}' to int in '{s}'")
-            return pd.Series()
+    return pd.Series(result)

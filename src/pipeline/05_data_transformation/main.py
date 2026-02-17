@@ -67,7 +67,7 @@ class DataTransformationTrainingPipeline:
             raise
 
         finally:
-            # 🔴 indispensable sinon UI vide
+            # 🔴 required, otherwise UI is empty
             mlflow.end_run()
 
 

@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
-from src.models.model_evaluation import ModelEvaluation
+from src.modeling.model_evaluation import ModelEvaluation
 from src.common_utils import is_last_status_ok
 from src.config import STATUS_FILE
 
@@ -37,7 +37,7 @@ class ModelEvaluationPipeline:
 
         start = time.time()
 
-        # 🔵 calcule + log interne (mais on relog ensuite dans nested)
+        # 🔵 compute + internal logging (then re-log in nested run)
         evaluator.log_into_mlflow()
 
         duration = time.time() - start
@@ -56,28 +56,28 @@ class ModelEvaluationPipeline:
 
     def main(self):
 
-        # 🔵 reconnect parent pipeline ou debug local
+        # 🔵 reconnect parent pipeline or local debug run
         if parent_run_id:
             mlflow.start_run(run_id=parent_run_id)
         else:
             mlflow.start_run(run_name="debug_parent")
 
         try:
-            # 🟢 nested run visible dans UI
+            # 🟢 nested run visible in UI
             with mlflow.start_run(run_name="08_model_evaluation", nested=True):
 
                 mlflow.log_param("step", "08_model_evaluation")
 
                 metrics, duration = self.run()
 
-                # log metrics dans CE nested run
+                # log metrics in THIS nested run
                 for k, v in metrics.items():
                     if isinstance(v, (int, float)):
                         mlflow.log_metric(k, v)
 
                 mlflow.log_metric("evaluation_duration_sec", duration)
 
-                # tags qualité
+                # quality tags
                 if "rmse" in metrics and metrics["rmse"] < 25:
                     mlflow.set_tag("model_quality", "good")
                     mlflow.set_tag("candidate_for_production", "true")
@@ -93,7 +93,7 @@ class ModelEvaluationPipeline:
             raise
 
         finally:
-            # 🔴 CRUCIAL sinon rien n'apparait dans UI
+            # 🔴 CRUCIAL, otherwise nothing appears in UI
             mlflow.end_run()
 
 

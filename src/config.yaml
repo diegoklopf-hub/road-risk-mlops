@@ -65,11 +65,8 @@ data_resampling:
   output_path: data/04_resampled/
 
 model_trainer:
-  root_dir: models
   X_train_path: data/04_resampled/X_train.csv
   y_train_path: data/04_resampled/y_train.csv
-  X_test_path: data/03_features_selected/X_test.csv
-  y_test_path: data/03_features_selected/y_test.csv
   features_path: models/features.joblib
   model_path: models/best_model.joblib
 
@@ -82,9 +79,9 @@ model_evaluation:
   mlflow_uri: http://mlflow_server:5000
 
 api_inference:
-  model_path: /model/best_model.joblib
-  features_path: /model/features.joblib
-  encoder_path: /model/one_hot_encoder.joblib
+  model_path: /models/best_model.joblib
+  features_path: /models/features.joblib
+  encoder_path: /models/one_hot_encoder.joblib
   road_secteur_path: /data/ref/road_secteur_bassens_current.csv
   template_path: /templates/saver_app.html
   top_k: 5

@@ -35,14 +35,14 @@ class DataTransformation:
         X = data.drop(columns=["score_grav"])
         y = data["score_grav"]
 
-        # --- FIX CORSE: dep/com peuvent contenir "2A"/"2B" -> rendre numérique
+        # --- CORSICA FIX: dep/com may contain "2A"/"2B" -> convert to numeric
 
         # dep: "2A"/"2B" -> 20/21
         if "dep" in X.columns:
             X["dep"] = X["dep"].astype("string").replace({"2A": "20", "2B": "21"})
             X["dep"] = pd.to_numeric(X["dep"], errors="coerce")
 
-        # com: peut valoir "2A271"/"2B120" -> "20271"/"21120" puis numérique
+        # com: may be "2A271"/"2B120" -> "20271"/"21120", then numeric
         if "com" in X.columns:
             X["com"] = X["com"].astype("string")
             X["com"] = X["com"].str.replace(r"^2A", "20", regex=True)

@@ -562,6 +562,159 @@
         .add-grid .filter-group.wide { grid-column: span 2; }
         .add-grid .filter-group label { font-size: 0.68rem; }
 
+        /* ── MONITORING PAGE ── */
+        .monitoring-restricted {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.65rem 1.1rem; margin-bottom: 1.25rem;
+            background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2);
+            border-radius: var(--radius); font-size: 0.78rem; color: var(--warning);
+        }
+        .monitoring-restricted .restricted-icon {
+            font-size: 0.9rem; flex-shrink: 0;
+        }
+        .monitoring-restricted .restricted-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600; letter-spacing: 1.5px; font-size: 0.68rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.85rem; margin-bottom: 1.5rem;
+        }
+        .service-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.1rem 1.25rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer; text-decoration: none; display: block;
+            position: relative; overflow: hidden;
+        }
+        .service-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .service-card-header {
+            display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.55rem;
+        }
+        .service-card-icon {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .service-card-name {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600; font-size: 0.88rem; color: var(--text-title);
+        }
+        .service-card-desc {
+            font-size: 0.78rem; color: var(--text-secondary);
+            line-height: 1.5; margin-bottom: 0.65rem;
+        }
+        .service-card-url {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem; padding: 0.25rem 0.5rem;
+            background: rgba(255,255,255,0.04); border-radius: 4px;
+            display: inline-block; transition: var(--transition);
+        }
+
+        .service-card.prometheus { border-left: 3px solid var(--fire-500); }
+        .service-card.prometheus .service-card-icon { background: var(--fire-soft); color: var(--fire-500); }
+        .service-card.prometheus .service-card-url { color: var(--fire-400); }
+        .service-card.grafana { border-left: 3px solid var(--success); }
+        .service-card.grafana .service-card-icon { background: var(--success-soft); color: var(--success); }
+        .service-card.grafana .service-card-url { color: var(--success); }
+        .service-card.airflow { border-left: 3px solid #06b6d4; }
+        .service-card.airflow .service-card-icon { background: rgba(6,182,212,0.12); color: #06b6d4; }
+        .service-card.airflow .service-card-url { color: #06b6d4; }
+        .service-card.flower { border-left: 3px solid #ec4899; }
+        .service-card.flower .service-card-icon { background: rgba(236,72,153,0.12); color: #ec4899; }
+        .service-card.flower .service-card-url { color: #ec4899; }
+        .service-card.mlflow { border-left: 3px solid var(--purple); }
+        .service-card.mlflow .service-card-icon { background: var(--purple-soft); color: var(--purple); }
+        .service-card.mlflow .service-card-url { color: var(--purple); }
+        .service-card.minio { border-left: 3px solid #f43f5e; }
+        .service-card.minio .service-card-icon { background: rgba(244,63,94,0.12); color: #f43f5e; }
+        .service-card.minio .service-card-url { color: #f43f5e; }
+        .service-card.nginx { border-left: 3px solid #22d3ee; }
+        .service-card.nginx .service-card-icon { background: rgba(34,211,238,0.12); color: #22d3ee; }
+        .service-card.nginx .service-card-url { color: #22d3ee; }
+        .service-card.metrics { border-left: 3px solid var(--info); }
+        .service-card.metrics .service-card-icon { background: var(--info-soft); color: var(--info); }
+        .service-card.metrics .service-card-url { color: var(--info); }
+        .service-card.health { border-left: 3px solid var(--success); }
+        .service-card.health .service-card-icon { background: var(--success-soft); color: var(--success); }
+        .service-card.health .service-card-url { color: var(--success); }
+
+        .monitoring-section-title {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 1.5px;
+            text-transform: uppercase; color: var(--text-muted);
+            margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .monitoring-section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        .dashboards-table { width: 100%; border-collapse: collapse; }
+        .dashboards-table th {
+            text-align: left; padding: 0.65rem 1rem;
+            font-size: 0.62rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); font-weight: 600;
+            background: var(--bg-input); border-bottom: 1px solid var(--border);
+        }
+        .dashboards-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem; color: var(--text-secondary);
+        }
+        .dashboards-table tr:last-child td { border-bottom: none; }
+        .dashboards-table tr:hover { background: var(--bg-input); }
+        .dashboard-name { color: var(--text-title); font-weight: 600; }
+        .dashboard-link {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem; color: var(--success);
+            text-decoration: none; transition: var(--transition);
+        }
+        .dashboard-link:hover { color: #4ade80; text-decoration: underline; }
+
+        .monitoring-flow {
+            display: flex; align-items: center; gap: 0.5rem;
+            flex-wrap: wrap; justify-content: center;
+            padding: 1.25rem; margin-bottom: 1.25rem;
+        }
+        .flow-node {
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+            padding: 0.45rem 0.75rem; border-radius: var(--radius-sm);
+            white-space: nowrap; font-weight: 500;
+        }
+        .flow-node.api-node { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); color: #06b6d4; }
+        .flow-node.prom-node { background: var(--fire-soft); border: 1px solid var(--fire-border); color: var(--fire-500); }
+        .flow-node.graf-node { background: var(--success-soft); border: 1px solid var(--success-border); color: var(--success); }
+        .flow-node.drift-node { background: var(--purple-soft); border: 1px solid rgba(167,139,250,0.25); color: var(--purple); }
+        .flow-node.infra-node { background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); color: #22d3ee; }
+        .flow-arrow { color: var(--text-muted); font-size: 1rem; }
+
+        .promql-table { width: 100%; border-collapse: collapse; }
+        .promql-table th {
+            text-align: left; padding: 0.65rem 1rem;
+            font-size: 0.62rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); font-weight: 600;
+            background: var(--bg-input); border-bottom: 1px solid var(--border);
+        }
+        .promql-table td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.78rem; color: var(--text-secondary);
+        }
+        .promql-table tr:last-child td { border-bottom: none; }
+        .promql-table tr:hover { background: var(--bg-input); }
+        .promql-code {
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+            background: rgba(0,0,0,0.25); padding: 0.2rem 0.5rem;
+            border-radius: 4px; color: var(--fire-400);
+            user-select: all; cursor: pointer;
+        }
+        .promql-metric { color: var(--text-title); font-weight: 500; }
+
         /* ── FOOTER ── */
         footer {
             background: var(--bg-card); border-top: 1px solid var(--border);
@@ -664,6 +817,7 @@
 <nav>
     <button class="nav-tab active" data-page="dashboard"><span class="tab-icon">📊</span> Tableau de bord</button>
     <button class="nav-tab" data-page="editor"><span class="tab-icon">🛣️</span> Typologie routière</button>
+    <button class="nav-tab" data-page="monitoring"><span class="tab-icon">🔒</span> RESTRICTED — Admin Only</button>
 </nav>
 
 <main>
@@ -873,6 +1027,96 @@
                 </div>
                 <button class="btn-primary" onclick="addNewRow()">+ Ajouter le segment</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MONITORING -->
+    <div id="monitoring" class="page">
+        <div class="editor-toolbar">
+            <div class="editor-title">🔧 Monitoring & Services — Stack MLOps</div>
+        </div>
+
+        <div class="monitoring-restricted">
+            <span class="restricted-icon">🔒</span>
+            <span class="restricted-label">RESTRICTED — Admin Only</span>
+            <span style="color: var(--text-secondary);">Cette page expose des URLs internes de l'infrastructure. Accès réservé à l'équipe technique.</span>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="monitoring-section-title">Services disponibles</div>
+        <div class="services-grid">
+            <a href="http://localhost:9090" target="_blank" class="service-card prometheus">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🔥</div>
+                    <div class="service-card-name">Prometheus</div>
+                </div>
+                <div class="service-card-desc">Métriques brutes, targets actifs, règles d'alerte et état des scrapers.</div>
+                <span class="service-card-url">http://localhost:9090</span>
+            </a>
+            <a href="http://localhost:3000" target="_blank" class="service-card grafana">
+                <div class="service-card-header">
+                    <div class="service-card-icon">📊</div>
+                    <div class="service-card-name">Grafana</div>
+                </div>
+                <div class="service-card-desc">Dashboards visuels — API Performance, Model Drift, Infrastructure.</div>
+                <span class="service-card-url">http://localhost:3000</span>
+            </a>
+            <a href="http://localhost:8081" target="_blank" class="service-card airflow">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🌊</div>
+                    <div class="service-card-name">Airflow</div>
+                </div>
+                <div class="service-card-desc">Gérer les DAGs et les workflows. Orchestration du pipeline ML.</div>
+                <span class="service-card-url">http://localhost:8081</span>
+            </a>
+            <a href="http://localhost:5555" target="_blank" class="service-card flower">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🌸</div>
+                    <div class="service-card-name">Flower</div>
+                </div>
+                <div class="service-card-desc">Monitorer les workers Celery — débogage, suivi des tâches.</div>
+                <span class="service-card-url">http://localhost:5555</span>
+            </a>
+            <a href="http://localhost:5001" target="_blank" class="service-card mlflow">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🧪</div>
+                    <div class="service-card-name">MLflow</div>
+                </div>
+                <div class="service-card-desc">Suivi des expériences et modèles ML. Registry et promotions.</div>
+                <span class="service-card-url">http://localhost:5001</span>
+            </a>
+            <a href="http://localhost:9001" target="_blank" class="service-card minio">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🪣</div>
+                    <div class="service-card-name">MinIO Console</div>
+                </div>
+                <div class="service-card-desc">Stockage des artefacts — fichiers, datasets, modèles sérialisés.</div>
+                <span class="service-card-url">http://localhost:9001</span>
+            </a>
+            <a href="http://localhost:8080" target="_blank" class="service-card nginx">
+                <div class="service-card-header">
+                    <div class="service-card-icon">🔀</div>
+                    <div class="service-card-name">Nginx (API)</div>
+                </div>
+                <div class="service-card-desc">Reverse proxy — accès à l'API accidents-api et services internes.</div>
+                <span class="service-card-url">http://localhost:8080</span>
+            </a>
+            <a href="http://localhost:8080/metrics" target="_blank" class="service-card metrics">
+                <div class="service-card-header">
+                    <div class="service-card-icon">📡</div>
+                    <div class="service-card-name">API Metrics</div>
+                </div>
+                <div class="service-card-desc">Endpoint Prometheus brut — métriques exposées par FastAPI.</div>
+                <span class="service-card-url">http://localhost:8080/metrics</span>
+            </a>
+            <a href="http://localhost:8080/health" target="_blank" class="service-card health">
+                <div class="service-card-header">
+                    <div class="service-card-icon">💚</div>
+                    <div class="service-card-name">API Health</div>
+                </div>
+                <div class="service-card-desc">Healthcheck de l'API — vérification de disponibilité du service.</div>
+                <span class="service-card-url">http://localhost:8080/health</span>
+            </a>
         </div>
     </div>
 </main>

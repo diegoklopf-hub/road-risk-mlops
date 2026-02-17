@@ -83,14 +83,14 @@ make reset-project
 make pipeline
 
 # Ou étapes individuelles
-python src/pipeline/01_data_import.py
-python src/pipeline/02_data_clean.py
-python src/pipeline/03_merge.py
-python src/pipeline/04_encodage.py
-python src/pipeline/05_data_transformation.py
-python src/pipeline/06_resampling.py
-python src/pipeline/07_model_trainer.py
-python src/pipeline/08_model_evaluation.py
+python src/pipeline/01_data_import/main.py
+python src/pipeline/02_data_clean/main.py
+python src/pipeline/03_merge/main.py
+python src/pipeline/04_encodage/main.py
+python src/pipeline/05_data_transformation/main.py
+python src/pipeline/06_resampling/main.py
+python src/pipeline/07_model_trainer/main.py
+python src/pipeline/08_model_evaluation/main.py
 ```
 
 ### Tests unitaires
@@ -169,16 +169,16 @@ MERGE:Validation status: ❌ False
 
 ### Parametres de Model Training
 
-Le `param_grid` XGBoost est definie dans `src/models/params.yaml` et chargee par le pipeline au moment du training.
+Le `param_grid` XGBoost est definie dans `src/modeling/params.yaml` et chargee par le pipeline au moment du training.
 
 ### Artefacts attendus
 
 Au demarrage, l'API charge le modele et la liste des features. Si un artefact manque, l'API echoue au startup.
 Artefacts requis (configures dans `config.yaml`) :
 
-- `model/best_model.joblib`
-- `model/features.joblib`
-- `model/one_hot_encoder.joblib`
+- `models/best_model.joblib`
+- `models/features.joblib`
+- `models/one_hot_encoder.joblib`
 
 ## API S.A.V.E.R. (saver_app)
 

@@ -40,14 +40,14 @@ class DataEncodagePipeline:
 
     def main(self):
 
-        # 🔵 reconnect parent pipeline OU debug local
+        # 🔵 reconnect parent pipeline OR local debug run
         if parent_run_id:
             mlflow.start_run(run_id=parent_run_id)
         else:
             mlflow.start_run(run_name="debug_parent")
 
         try:
-            # 🟢 nested run pour CE step
+            # 🟢 nested run for THIS step
             with mlflow.start_run(run_name="04_encodage", nested=True):
 
                 mlflow.log_param("step", "04_encodage")
@@ -65,7 +65,7 @@ class DataEncodagePipeline:
             raise
 
         finally:
-            # 🔴 CRUCIAL sinon MLflow UI reste vide
+            # 🔴 CRUCIAL, otherwise MLflow UI stays empty
             mlflow.end_run()
 
 

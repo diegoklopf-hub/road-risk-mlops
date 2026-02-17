@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import mlflow
-import mlflow.sklearn
 import joblib
 from pathlib import Path
 from urllib.parse import urlparse
@@ -41,18 +40,6 @@ class ModelEvaluation:
 
             mlflow.log_params(getattr(self.config, "all_params", {}))
 
-
             mlflow.log_metric("rmse", rmse)
             mlflow.log_metric("mae", mae)
-            mlflow.log_metric("r2", r2)
-
-            # Model registry does not work with file store
-#            if tracking_url_type_store != "file":
-
-                # Register the model
-                # There are other ways to use the Model Registry, which depends on the use case.
-
-#                mlflow.sklearn.log_model(model, "model")
-
-#            else:
-#                mlflow.sklearn.log_model(model, "model")           
+            mlflow.log_metric("r2", r2)     

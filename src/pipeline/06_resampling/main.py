@@ -48,7 +48,7 @@ class DataResamplingPipeline:
             mlflow.start_run(run_name="debug_parent")
 
         try:
-            # 🟢 nested run du stage
+            # 🟢 nested run for this stage
             with mlflow.start_run(run_name="06_resampling", nested=True):
 
                 mlflow.log_param("step", "06_resampling")
@@ -64,7 +64,7 @@ class DataResamplingPipeline:
             raise
 
         finally:
-            # 🔴 indispensable sinon UI vide
+            # 🔴 required, otherwise UI is empty
             mlflow.end_run()
 
 

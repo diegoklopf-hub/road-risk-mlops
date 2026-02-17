@@ -48,7 +48,7 @@ class DataImportPipeline:
 
         try:
         # -------------------------
-        # nested run réel
+        # actual nested run
         # -------------------------
             with mlflow.start_run(run_name="01_data_import", nested=True):
 
@@ -67,7 +67,7 @@ class DataImportPipeline:
             raise
 
         finally:
-        # CRUCIAL : fermer le parent reconnecté
+        # CRUCIAL: close the reconnected parent run
             mlflow.end_run()
 
 

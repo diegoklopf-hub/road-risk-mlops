@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.config_manager import ConfigurationManager
 from src.custom_logger import logger
-from src.models.model_trainer import ModelTrainer
+from src.modeling.model_trainer import ModelTrainer
 from src.common_utils import is_last_status_ok
 from src.config import STATUS_FILE
 
@@ -47,14 +47,14 @@ class ModelTrainerPipeline:
 
     def main(self):
 
-        # 🔵 reconnect parent pipeline OU debug local
+        # 🔵 reconnect parent pipeline OR local debug run
         if parent_run_id:
             mlflow.start_run(run_id=parent_run_id)
         else:
             mlflow.start_run(run_name="debug_parent")
 
         try:
-            # 🟢 nested run du stage 07
+            # 🟢 nested run for stage 07
             with mlflow.start_run(run_name="07_model_training", nested=True):
 
                 mlflow.log_param("step", "07_model_training")
@@ -65,7 +65,7 @@ class ModelTrainerPipeline:
                 mlflow.log_metric("training_duration_sec", duration)
                 mlflow.log_metric("n_features", len(features))
 
-                # 🔥 log model dans ce nested run
+                # 🔥 log model in this nested run
                 mlflow.sklearn.log_model(
                     sk_model=model,
                     artifact_path="model",
@@ -81,7 +81,7 @@ class ModelTrainerPipeline:
             raise
 
         finally:
-            # 🔴 CRUCIAL sinon UI vide
+            # 🔴 CRUCIAL, otherwise UI is empty
             mlflow.end_run()
 
 

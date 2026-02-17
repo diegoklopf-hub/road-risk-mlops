@@ -41,14 +41,14 @@ class DataMergePipeline:
 
     def main(self):
 
-        # 🔵 reconnect parent pipeline run OU debug local
+        # 🔵 reconnect parent pipeline run OR local debug run
         if parent_run_id:
             mlflow.start_run(run_id=parent_run_id)
         else:
             mlflow.start_run(run_name="debug_parent")
 
         try:
-            # 🟢 nested run pour CE step
+            # 🟢 nested run for THIS step
             with mlflow.start_run(run_name="03_merge", nested=True):
 
                 mlflow.log_param("step", "03_merge")
@@ -66,7 +66,7 @@ class DataMergePipeline:
             raise
 
         finally:
-            # 🔴 OBLIGATOIRE sinon rien dans MLflow UI
+            # 🔴 REQUIRED, otherwise nothing appears in MLflow UI
             mlflow.end_run()
 
 

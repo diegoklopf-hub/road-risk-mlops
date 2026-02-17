@@ -8,7 +8,7 @@ from src.custom_logger import logger
 security = HTTPBasic()
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-# Chargement des users
+# Load users
 def load_users_db():
     USERS_FILE = Path("/run/secrets/users_db")
     if USERS_FILE.exists():

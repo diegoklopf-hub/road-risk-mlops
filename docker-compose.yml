@@ -1,15 +1,176 @@
+x-airflow-common: &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.8.1}
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DAG_PROCESSOR__PARSING_PROCESSES: "1"
+    AIRFLOW__DAG_PROCESSOR__MIN_FILE_PROCESS_INTERVAL: "60"
+    AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: "10"
+    AIRFLOW__SCHEDULER__JOB_HEARTBEAT_SEC: "10"
+    AIRFLOW__SCHEDULER__POOL_METRICS_INTERVAL: "30.0"
+    AIRFLOW__SCHEDULER__RUNNING_METRICS_INTERVAL: "60.0"
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__API__AUTH_BACKEND: "airflow.api.auth.backend.basic_auth"
+    AIRFLOW__SMTP__SMTP_HOST: "smtp.gmail.com"
+    AIRFLOW__SMTP__SMTP_PORT: 587
+    AIRFLOW__SMTP__SMTP_USER: "de.airflow@gmail.com"
+    AIRFLOW__SMTP__SMTP_PASSWORD: "cfsrvkongsobheta"
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: "de.airflow@gmail.com"
+    AIRFLOW__CELERY__WORKER_CONCURRENCY: "8"
+    PYTHONPATH: /opt/airflow/dags
+    GIT_PYTHON_REFRESH: "quiet"
+  deploy:
+    resources:
+      limits:
+        cpus: '0.75'    # Limite à 75% d'un cœur CPU
+        memory: 1024M   # Limite à 1 Go de RAM
+    # _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+  networks:
+    - saver_network
+  volumes:
+    - ./src/pipeline/dags/:/opt/airflow/dags
+    - ./logs/airflow/:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - /var/run/docker.sock:/var/run/docker.sock:rw
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+
 services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    networks:
+    - saver_network
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  mlflow-db:
+    image: postgres:15
+    container_name: mlflow_postgres
+    networks:
+    - saver_network
+    environment:
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: mlflow
+      POSTGRES_DB: mlflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    networks:
+    - saver_network
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    networks:
+    - saver_network
+    ports:
+      - 8081:8080
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    networks:
+    - saver_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"',
+        ]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    networks:
+    - saver_network
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 8s
+      timeout: 30s
+      retries: 50
+      start_period: 60s
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    networks:
+    - saver_network
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    networks:
+    - saver_network
+    ports:
+      - 5555:5555
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+    restart: always
+
   accidents-api:
     build:
       context: .
       dockerfile: src/api/Dockerfile
+    networks:
+    - saver_network
     deploy:
-      replicas: 3
+      replicas: 2
     expose:
       - "8000"
     restart: unless-stopped
     volumes:
-      - ./logs:/app/logs:rw
+      - ./logs/run_logs/:/app/logs/run_logs
       - ./data/ref:/data/ref/:rw
       - ./data/secrets/users_db.json:/run/secrets/users_db:ro
     env_file:
@@ -20,6 +181,8 @@ services:
       context: deployments/nginx/
       dockerfile: Dockerfile
     container_name: nginx_revproxy
+    networks:
+    - saver_network
     ports:
       - "8080:80"
       - "443:443"
@@ -30,3 +193,66 @@ services:
     depends_on:
       - accidents-api
     restart: unless-stopped
+
+  minio:
+    image: minio/minio
+    container_name: mlflow_minio
+    networks:
+    - saver_network
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+
+  mlflow:
+    build: ./deployments/mlflow/mlflow
+    container_name: mlflow_server
+    networks:
+    - saver_network
+    depends_on:
+      - mlflow-db
+      - minio
+    environment:
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      MLFLOW_ENABLE_PROXY_FIX: "true"
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://mlflow:mlflow@mlflow-db:5432/mlflow
+      --default-artifact-root s3://mlflow
+      --host 0.0.0.0
+      --port 5000
+      --allowed-hosts '*'
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc
+    networks:
+      - saver_network
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 minio minio123;
+      mc mb --ignore-existing myminio/mlflow;
+      exit 0;
+      "
+
+volumes:
+  postgres-db-volume:
+  postgres_data:
+  minio_data:
+
+networks:
+  saver_network:
+    name: saver_network
