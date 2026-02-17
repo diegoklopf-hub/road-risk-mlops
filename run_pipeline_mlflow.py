@@ -22,7 +22,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--start", type=int, default=0, help="Numéro de la premier step [1, 2, 3, ..]")
 args = parser.parse_args()
 
-if args.start < 1 or args.start > len(STEPS):
+if args.start == 0:
+    args.start = 1
+    print("🚀 Démarrage de la pipeline depuis le début")
+elif args.start < 1 or args.start > len(STEPS):
     raise ValueError(f"--start doit être entre 1 et {len(STEPS)} : value actuelle {args.start}")
 
 with mlflow.start_run(run_name="GLOBAL_PIPELINE_RUN") as parent:

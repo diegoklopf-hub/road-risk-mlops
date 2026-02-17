@@ -56,6 +56,22 @@ Cette commande exécute le script et crée le fichier users_db.json avec les mot
    `OPENWEATHER_API_KEY="......"` - (/.env)
 
 ## Démarrage Rapide
+### 0) Configuration `.env`
+
+Créer un fichier `.env` à la racine du projet :
+```bash
+OPENWEATHER_API_KEY="..."
+HOST_PROJECT_ROOT=/chemin/absolu/vers/SEP25-BMLE-MLOPS-ACCIDENTS
+```
+
+`HOST_PROJECT_ROOT` est le chemin absolu du projet sur la machine hôte, nécessaire aux montages Docker/Airflow.
+
+### 1) Permissions Docker (WSL)
+
+Si `docker ps` retourne une erreur de permission :
+```bash
+sudo chmod 666 /var/run/docker.sock
+```
 
 ### Installation
 ```bash
@@ -262,22 +278,22 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   │   ├── data_transformation.py # Split/normalisation/features
 │   │   ├── schema.yaml            # Schema de reference
 │   │   └── __init__.py
-│   ├── models/                    # Modules ML et prédictions
+│   ├── modeling/                  # Modules ML et prédictions
 │   │   ├── model_trainer.py
 │   │   ├── model_evaluation.py
 │   │   ├── params.yaml
 │   │   └── __init__.py
 │   ├── pipeline/                  # Orchestration du pipeline
-│   │   ├── 00_pipeline.py         # Pipeline complet
-│   │   ├── 01_data_import.py
-│   │   ├── 02_data_clean.py
-│   │   ├── 03_merge.py
-│   │   ├── 04_encodage.py
-│   │   ├── 05_data_transformation.py
-│   │   ├── 06_resampling.py
-│   │   ├── 07_model_trainer.py
-│   │   ├── 08_model_evaluation.py
-│   │   └── __init__.py
+│   │   ├── 01_data_import
+│   │   ├── 02_data_clean
+│   │   ├── 03_merge
+│   │   ├── 04_encodage
+│   │   ├── 05_data_transformation
+│   │   ├── 06_resampling
+│   │   ├── 07_model_trainer
+│   │   ├─── 08_model_evaluation
+│   │   └── dags
+│   │       └── pipeline_dag.py    # Airflow dags
 │   ├── api/                       # API FastAPI
 │   │   ├── feature_encoder.py     # Encodage des features
 │   │   ├── feature_time.py        # Features temporelles
