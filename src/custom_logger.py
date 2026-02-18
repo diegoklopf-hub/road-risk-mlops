@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-LOG_DIR = Path("logs")
+LOG_DIR = Path("logs/run_logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 log_file = LOG_DIR / "logs.log"

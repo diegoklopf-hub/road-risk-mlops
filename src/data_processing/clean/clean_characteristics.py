@@ -166,13 +166,13 @@ def handle_corse_codes(df):
     df['dep'] = df['dep'].astype(str).str.replace(".0", "", regex=False)
     df['com'] = df['com'].astype(str).str.replace(".0", "", regex=False)
 
-    # Extraction des 3 derniers chiffres du code de la commune
+    # Extract the last 3 digits of the municipality code
     code3 = df['com'].str[-3:]
 
-    # Recherche du nouveau code de département potentiel à partir du code de la commune
+    # Look up potential new department code from municipality code
     new_dep = code3.map(dict_inverse)
 
-    # Remplacement du code département "20" par le nouveau code si la commune existe dans le dictionnaire
+    # Replace department code "20" with the new code when municipality mapping exists
     mask = (df['dep'] == "20") & new_dep.notna()
     df.loc[mask, 'dep'] = new_dep[mask]
     
@@ -296,7 +296,7 @@ def clean_characteristics(df,out_path):
     cols_to_drop.append('adr')  # also remove 'adr'
     df = drop_columns(df, cols_to_drop, logger, "caracteristiques.csv")
 
-    # Réorganisation des colonnes et sauvegarde du fichier nettoyé
+    # Reorder columns and save cleaned file
     df.to_csv(os.path.join(out_path, "caracteristiques.csv"), index=False)
     print("    -> Cleaned 'caracteristiques' data saved to:", os.path.join(out_path, "caracteristiques.csv"))
 

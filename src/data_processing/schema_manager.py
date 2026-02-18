@@ -20,8 +20,8 @@ class SchemaManager:
         Returns the description for a specific column name.
         Example: get_description('mois') -> "Mois de l'accident"
         """
-        # On accède d'abord au dictionnaire de la colonne, 
-        # puis on récupère la valeur de la clé 'description'
+        # First access the column dictionary,
+        # then fetch the value of the 'description' key
         column_info = self.schema.get('COLUMNS', {}).get(column_name)
         
         if column_info and 'description' in column_info:

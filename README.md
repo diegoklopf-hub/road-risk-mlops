@@ -56,6 +56,22 @@ Cette commande exécute le script et crée le fichier users_db.json avec les mot
    `OPENWEATHER_API_KEY="......"` - (/.env)
 
 ## Démarrage Rapide
+### 0) Configuration `.env`
+
+Créer un fichier `.env` à la racine du projet :
+```bash
+OPENWEATHER_API_KEY="..."
+HOST_PROJECT_ROOT=/chemin/absolu/vers/SEP25-BMLE-MLOPS-ACCIDENTS
+```
+
+`HOST_PROJECT_ROOT` est le chemin absolu du projet sur la machine hôte, nécessaire aux montages Docker/Airflow.
+
+### 1) Permissions Docker (WSL)
+
+Si `docker ps` retourne une erreur de permission :
+```bash
+sudo chmod 666 /var/run/docker.sock
+```
 
 ### Installation
 ```bash
@@ -83,14 +99,14 @@ make reset-project
 make pipeline
 
 # Ou étapes individuelles
-python src/pipeline/01_data_import.py
-python src/pipeline/02_data_clean.py
-python src/pipeline/03_merge.py
-python src/pipeline/04_encodage.py
-python src/pipeline/05_data_transformation.py
-python src/pipeline/06_resampling.py
-python src/pipeline/07_model_trainer.py
-python src/pipeline/08_model_evaluation.py
+python src/pipeline/01_data_import/main.py
+python src/pipeline/02_data_clean/main.py
+python src/pipeline/03_merge/main.py
+python src/pipeline/04_encodage/main.py
+python src/pipeline/05_data_transformation/main.py
+python src/pipeline/06_resampling/main.py
+python src/pipeline/07_model_trainer/main.py
+python src/pipeline/08_model_evaluation/main.py
 ```
 
 ### Tests unitaires
@@ -169,16 +185,16 @@ MERGE:Validation status: ❌ False
 
 ### Parametres de Model Training
 
-Le `param_grid` XGBoost est definie dans `src/models/params.yaml` et chargee par le pipeline au moment du training.
+Le `param_grid` XGBoost est definie dans `src/modeling/params.yaml` et chargee par le pipeline au moment du training.
 
 ### Artefacts attendus
 
 Au demarrage, l'API charge le modele et la liste des features. Si un artefact manque, l'API echoue au startup.
 Artefacts requis (configures dans `config.yaml`) :
 
-- `model/best_model.joblib`
-- `model/features.joblib`
-- `model/one_hot_encoder.joblib`
+- `models/best_model.joblib`
+- `models/features.joblib`
+- `models/one_hot_encoder.joblib`
 
 ## API S.A.V.E.R. (saver_app)
 
@@ -262,22 +278,22 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   │   ├── data_transformation.py # Split/normalisation/features
 │   │   ├── schema.yaml            # Schema de reference
 │   │   └── __init__.py
-│   ├── models/                    # Modules ML et prédictions
+│   ├── modeling/                  # Modules ML et prédictions
 │   │   ├── model_trainer.py
 │   │   ├── model_evaluation.py
 │   │   ├── params.yaml
 │   │   └── __init__.py
 │   ├── pipeline/                  # Orchestration du pipeline
-│   │   ├── 00_pipeline.py         # Pipeline complet
-│   │   ├── 01_data_import.py
-│   │   ├── 02_data_clean.py
-│   │   ├── 03_merge.py
-│   │   ├── 04_encodage.py
-│   │   ├── 05_data_transformation.py
-│   │   ├── 06_resampling.py
-│   │   ├── 07_model_trainer.py
-│   │   ├── 08_model_evaluation.py
-│   │   └── __init__.py
+│   │   ├── 01_data_import
+│   │   ├── 02_data_clean
+│   │   ├── 03_merge
+│   │   ├── 04_encodage
+│   │   ├── 05_data_transformation
+│   │   ├── 06_resampling
+│   │   ├── 07_model_trainer
+│   │   ├─── 08_model_evaluation
+│   │   └── dags
+│   │       └── pipeline_dag.py    # Airflow dags
 │   ├── api/                       # API FastAPI
 │   │   ├── feature_encoder.py     # Encodage des features
 │   │   ├── feature_time.py        # Features temporelles

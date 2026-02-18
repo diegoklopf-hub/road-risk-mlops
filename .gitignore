@@ -22,7 +22,7 @@ ENV/
 *.env
 
 ############################
-# DATA (NE JAMAIS VERSIONNER)
+# DATA 
 ############################
 data/
 metrics/
@@ -64,6 +64,7 @@ api/deployments/nginx/certs/
 ############################
 mlruns/
 mlartifacts/
+mlflow.db
 
 ############################
 # IDE

@@ -77,12 +77,8 @@ class DataResamplingConfig:
 
 @dataclass(frozen=True)
 class ModelTrainerConfig:
-    root_dir: Path
     X_train_path: Path
-    X_test_path: Path
     y_train_path: Path
-    y_test_path: Path
-    sample_weight_train_path: Optional[Path]
     model_path: Path
     features_path: Path
     param_grid: Dict[str, Any]

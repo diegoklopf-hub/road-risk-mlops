@@ -4,11 +4,6 @@ import mlflow
 import os
 import time
 
-# MLflow config
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://mlflow_server:5000"))
-mlflow.set_experiment("GLOBAL_PIPELINE")
-parent_run_id = os.getenv("MLFLOW_PARENT_RUN_ID")
-
 # Fix import path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -19,6 +14,7 @@ from src.common_utils import is_last_status_ok
 from src.config import STATUS_FILE
 from src.config_manager import ConfigurationManager
 from src.data_processing.data_import import DataImport
+from src.mlflow_parent import get_or_create_parent_run
 
 STAGE_NAME = "01 - Data Import stage"
 
@@ -38,20 +34,12 @@ class DataImportPipeline:
 
     def main(self):
 
-    # -------------------------
-    # reconnect au parent run
-    # -------------------------
-        if parent_run_id:
-            mlflow.start_run(run_id=parent_run_id)
-        else:
-            mlflow.start_run(run_name="debug_parent")
+        # 🔵 Reconnexion au parent run
+        parent_run_id = get_or_create_parent_run()
+        mlflow.start_run(run_id=parent_run_id)
 
         try:
-        # -------------------------
-        # nested run réel
-        # -------------------------
             with mlflow.start_run(run_name="01_data_import", nested=True):
-
                 mlflow.log_param("step", "01_data_import")
 
                 start = time.time()
@@ -67,7 +55,7 @@ class DataImportPipeline:
             raise
 
         finally:
-        # CRUCIAL : fermer le parent reconnecté
+        # CRUCIAL: close the reconnected parent run
             mlflow.end_run()
 
 

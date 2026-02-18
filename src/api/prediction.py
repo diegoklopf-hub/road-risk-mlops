@@ -3,13 +3,13 @@ import random
 from src.custom_logger import logger
 
 # Risk level thresholds (10 levels)
-RISK_THRESHOLD_10 = 85    # Extrême
-RISK_THRESHOLD_9 = 80     # Très Élevé (ancien Very High)
-RISK_THRESHOLD_8 = 77.5   # Élevé (ancien High)
-RISK_THRESHOLD_7 = 70     # Important
-RISK_THRESHOLD_6 = 55     # Modéré
-RISK_THRESHOLD_5 = 40     # Moyen
-RISK_THRESHOLD_4 = 30     # Très Faible
+RISK_THRESHOLD_10 = 85    # Extreme
+RISK_THRESHOLD_9 = 80     # Very High (previously Very High)
+RISK_THRESHOLD_8 = 77.5   # High (previously High)
+RISK_THRESHOLD_7 = 70     # Significant
+RISK_THRESHOLD_6 = 55     # Moderate
+RISK_THRESHOLD_5 = 40     # Medium
+RISK_THRESHOLD_4 = 30     # Very Low
 # Below 30 = negligible
 
 

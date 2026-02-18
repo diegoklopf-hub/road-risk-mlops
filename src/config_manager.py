@@ -138,15 +138,6 @@ class ConfigurationManager:
     def get_model_trainer_config(self) -> ModelTrainerConfig:
         cfg = _get(self.config, "model_trainer")
 
-        root_dir = _to_path(_get(cfg, "root_dir"))
-        create_directories([root_dir])
-
-        sw_raw = None
-        if (isinstance(cfg, dict) and "sample_weight_train_path" in cfg) or hasattr(cfg, "sample_weight_train_path"):
-            sw_raw = _get(cfg, "sample_weight_train_path")
-
-        sw_path = _to_path(sw_raw) if sw_raw else None
-
         param_grid: Dict[str, Any] = {}
         if (isinstance(self.params, dict) and "XGBoost" in self.params) or hasattr(self.params, "XGBoost"):
             xgb_params = _get(self.params, "XGBoost")
@@ -154,12 +145,8 @@ class ConfigurationManager:
                 param_grid = _get(xgb_params, "param_grid")
 
         return ModelTrainerConfig(
-            root_dir=root_dir,
             X_train_path=_to_path(_get(cfg, "X_train_path")),
-            X_test_path=_to_path(_get(cfg, "X_test_path")),
             y_train_path=_to_path(_get(cfg, "y_train_path")),
-            y_test_path=_to_path(_get(cfg, "y_test_path")),
-            sample_weight_train_path=sw_path,
             model_path=_to_path(_get(cfg, "model_path")),
             features_path=_to_path(_get(cfg, "features_path")),
             param_grid=param_grid,
