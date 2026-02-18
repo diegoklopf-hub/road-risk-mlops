@@ -1,0 +1,5 @@
+apiVersion: 1
+
+preferences:
+  - org_id: 1
+    home_dashboard_uid: saver-api-monitoring

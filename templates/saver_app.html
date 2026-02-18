@@ -806,8 +806,8 @@
         <div id="loggedOutState" class="user-section hidden">
             <button class="btn-login-header" onclick="showLoginPage()">Connexion</button>
         </div>
-        <div id="loggedInState" class="user-section">
-            <div class="user-avatar">HY</div>
+        <div id="loggedInState" class="user-section hidden">
+            <div class="user-avatar" id="userAvatar">HY</div>
             <span class="user-name" id="currentUserName">Cpt. H. Ydrant</span>
             <button class="btn-ghost-header" onclick="logout()">Déconnexion</button>
         </div>
@@ -816,8 +816,8 @@
 
 <nav>
     <button class="nav-tab active" data-page="dashboard"><span class="tab-icon">📊</span> Tableau de bord</button>
-    <button class="nav-tab" data-page="editor"><span class="tab-icon">🛣️</span> Typologie routière</button>
-    <button class="nav-tab" data-page="monitoring"><span class="tab-icon">🔒</span> RESTRICTED — Admin Only</button>
+    <button class="nav-tab hidden" id="editorTab" data-page="editor"><span class="tab-icon">🛣️</span> Typologie routière</button>
+    <button class="nav-tab hidden" id="monitoringTab"  data-page="monitoring"><span class="tab-icon">🔒</span> RESTRICTED — Admin Only</button>
 </nav>
 
 <main>
@@ -838,7 +838,7 @@
     </div>
 
     <!-- DASHBOARD -->
-    <div id="dashboard" class="page active">
+    <div id="dashboard" class="page">
         <div class="alert-strip">
             <div class="alert-item"><span class="alert-label">Météo</span><span class="alert-value" id="dashMeteo">⏳ Chargement...</span></div>
             <div class="alert-separator"></div>
@@ -1152,35 +1152,165 @@
 
 <script>
     const API_BASE_URL = '/api';
-    let isLoggedIn = true;
-    let currentUser = 'Cpt. H. Ydrant';
+    // ── Stored credentials (base64 encoded, cleared on logout) ──
+    let authHeader = sessionStorage.getItem('saver_auth') || null;
+    let isLoggedIn = !!authHeader;
+    let currentUser = JSON.parse(sessionStorage.getItem('saver_user') || 'null');
+
+
 
     // Timeline risk data (simulated)
     let timelineData = [];
 
+    function getInitials(displayName) {
+        if (!displayName) return '??';
+        const parts = displayName.split(/[\s.]+/); 
+        return parts
+            .filter(w => w.length > 0)
+            .map(w => w[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    }
+
+    function apiFetch(url, options = {}) {
+        if (!authHeader) {
+            showToast('Session expirée — veuillez vous reconnecter', 'error');
+            showLoginPage();
+            return Promise.reject(new Error('Not authenticated'));
+        }
+        return fetch(url, {
+            ...options,
+            headers: {
+            ...(options.headers || {}),
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+            },
+        });
+        }
+
+    /**
+     * Submit handler — called when the login form is submitted.
+     * Encodes credentials as Base64 and POSTs to /api/auth/login.
+     */
+    async function handleLogin(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!username || !password) {
+            showToast('Veuillez remplir tous les champs', 'error');
+            return;
+        }
+
+        // Build the Basic Auth header value
+        const encoded = btoa(`${username}:${password}`);
+        const candidateHeader = `Basic ${encoded}`;
+
+        try {
+            const response = await fetch('/api/login', {
+            method: 'GET',
+            headers: { 'Authorization': candidateHeader },
+            });
+
+            if (response.status === 401) {
+            showToast('Identifiant ou mot de passe incorrect', 'error');
+            return;
+            }
+
+            if (!response.ok) {
+            showToast(`Erreur serveur (${response.status})`, 'error');
+            return;
+            }
+
+            const result = await response.json();
+            const user = result.user;
+
+            // ── Persist auth across page refresh ──
+            authHeader = candidateHeader;
+            sessionStorage.setItem('saver_auth', authHeader);
+            sessionStorage.setItem('saver_user', JSON.stringify(user));
+
+            // ── Update UI ──
+            isLoggedIn = true;
+            currentUser = user;
+            document.getElementById('editorTab').classList.remove('hidden');
+            document.getElementById('monitoringTab').classList.remove('hidden');
+            document.getElementById('userAvatar').textContent = getInitials(currentUser);
+            document.getElementById('currentUserName').textContent = currentUser;
+            document.getElementById('loggedOutState').classList.add('hidden');
+            document.getElementById('loggedInState').classList.remove('hidden');
+
+            // Navigate to dashboard
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('dashboard').classList.add('active');
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-page="dashboard"]').classList.add('active');
+
+            showToast(`Bienvenue ${user.display_name}`, 'success');
+
+            // Load data now that we're authenticated
+            loadDataFromAPI();
+            updateRiskTimeline();
+            runPrediction();
+
+        } catch (err) {
+            console.error('Login error:', err);
+            showToast("Impossible de contacter le serveur d'authentification", 'error');
+        }
+}
+
     function updateAuthUI() {
         document.getElementById('loggedOutState').classList.toggle('hidden', isLoggedIn);
         document.getElementById('loggedInState').classList.toggle('hidden', !isLoggedIn);
-        document.getElementById('currentUserName').textContent = currentUser;
+        document.getElementById('editorTab').classList.toggle('hidden', !isLoggedIn);
+        document.getElementById('monitoringTab').classList.toggle('hidden', !isLoggedIn);
+        if (currentUser) {
+            document.getElementById('currentUserName').textContent = currentUser.username;
+            document.getElementById('userAvatar').textContent = getInitials(currentUser);
+        }
     }
 
     function showLoginPage() {
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('login').classList.add('active');
     }
-
-    function login(username) {
-        isLoggedIn = true;
-        currentUser = 'Cpt. H. Ydrant';
-        updateAuthUI();
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('dashboard').classList.add('active');
-        document.querySelector('[data-page="dashboard"]').classList.add('active');
-        showToast(`Bienvenue ${currentUser}`, 'success');
+    
+function restoreSession() {
+    if (authHeader && currentUser) {
+        return apiFetch('/api/login')   // ← return + correct endpoint
+            .then(r => {
+                if (r.ok) { isLoggedIn = true; updateAuthUI(); }
+                else { logout(); }
+            })
+            .catch(() => { isLoggedIn = true; updateAuthUI(); });
+    } else {
+        showLoginPage();
+        return Promise.resolve();
     }
+}
 
-    function logout() { isLoggedIn = false; updateAuthUI(); showToast('Déconnexion réussie', 'success'); }
+    function logout() { 
+        authHeader = null;
+        isLoggedIn = false;
+        currentUser = null;
+        sessionStorage.removeItem('saver_auth');
+        sessionStorage.removeItem('saver_user');
+
+        document.getElementById('editorTab').classList.add('hidden');
+        document.getElementById('monitoringTab').classList.add('hidden');
+        document.getElementById('loggedOutState').classList.remove('hidden');
+        document.getElementById('loggedInState').classList.add('hidden');
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+        showToast('Déconnexion réussie', 'success');
+
+        // Small delay then show login
+        setTimeout(showLoginPage, 400);
+    }
 
     // Navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -1197,7 +1327,7 @@
         checkbox.addEventListener('change', function() { this.parentElement.classList.toggle('checked', this.checked); });
     });
 
-    document.getElementById('loginForm').addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('loginUsername').value); });
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
 
     // ── TIMELINE ──
     
@@ -1216,7 +1346,7 @@
         try {
             // APPEL AU NOUVEAU ENDPOINT (ASYNCHRONE)
             // On envoie une requête POST avec le timestamp de début et l'intervalle souhaité
-            const response = await fetch("/api/risk-timeline", {
+            const response = await apiFetch("/api/risk-timeline", {
                 method: "POST", // On conserve POST pour déclencher le calcul côté serveur
                 headers: { "Content-Type": "application/json" }
             });
@@ -1379,7 +1509,7 @@
         if (selectedCommunes.length === 0) { showToast('Sélectionnez au moins une commune', 'error'); return; }
 
         try {
-            const response = await fetch("/api/v2/predict", {
+            const response = await apiFetch("/api/v2/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ "cities": selectedCommunes, "timestamp": document.getElementById('dateStart').value + 'T' + document.getElementById('timeStart').value }),
@@ -1480,7 +1610,7 @@
     async function loadDataFromAPI() {
         setSyncStatus('syncing', 'Chargement...');
         try {
-            const response = await fetch(`${API_BASE_URL}/roads`);
+            const response = await apiFetch(`${API_BASE_URL}/roads`);
             if (response.ok) {
                 csvData = await response.json();
                 displayData = csvData.map(csvRowToDisplayRow);
@@ -1545,7 +1675,7 @@
         setSyncStatus('syncing', 'Synchronisation...');
         localStorage.setItem('saver_roads_data_v3', JSON.stringify(csvData));
         try {
-            const r = await fetch(`${API_BASE_URL}/roads`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(csvData) });
+            const r = await apiFetch(`${API_BASE_URL}/roads`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(csvData) });
             if (r.ok) setSyncStatus('success', 'Synchronisé'); else throw new Error('Sync failed');
         } catch (e) { setSyncStatus('success', 'Sauvegardé localement'); }
     }
@@ -1601,14 +1731,15 @@
         const currentHour = now.getHours();
         document.getElementById('timeStart').value = `${pad(currentHour)}:00`;
 
-        loadDataFromAPI();
-        updateAuthUI();
-        updateRiskTimeline();
+        restoreSession().then(() => {
+        if (isLoggedIn) {
+            loadDataFromAPI();
+            updateRiskTimeline();
+            runPrediction();
+            setInterval(updateRiskTimeline, 900000); // ← here, not outside
 
-        // Lancement de la boucle d'actualisation (toutes les 15 minutes)
-        setInterval(updateRiskTimeline, 900000);
-
-        runPrediction();
+            }
+        });
     });
 </script>
 </body>
