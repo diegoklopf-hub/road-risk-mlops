@@ -14,7 +14,8 @@ images_list = [
     'pipeline-05_data_transformation:latest',
     'pipeline-06_resampling:latest',
     'pipeline-07_model_trainer:latest',
-    'pipeline-08_model_evaluation:latest'
+    'pipeline-08_model_evaluation:latest',
+    'pipeline-09_shap_explicability:latest'
 ]
 
 

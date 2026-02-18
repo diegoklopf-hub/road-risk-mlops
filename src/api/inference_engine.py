@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-
 import pandas as pd
 import joblib
 
@@ -8,12 +7,7 @@ from src.common_utils import read_yaml
 from src.custom_logger import logger
 from feature_weather import encode_meteorological_features
 from feature_encoder import encode_categorical_values
-from prediction import build_top_predictions, make_predictions, score_to_risk_level
-
-# -------------------------------------------------------------------
-# TODO
-# -------------------------------------------------------------------
-# - Replace placeholder factors with data-driven explanations.
+from prediction import build_shap_factors, build_top_predictions, make_predictions, score_to_risk_level, select_top_predictions
 
 
 def is_docker():
@@ -28,38 +22,22 @@ FEATURES_PATH = Path(path_prefix + API_CFG.features_path)
 ENCODER_PATH = Path(path_prefix + API_CFG.encoder_path)
 ENCODED_COLS = CONFIG.data_encodage.encode_columns
 DEFAULT_TOP_K = int(API_CFG.top_k)
+TIMELINE_LENGTH = int(API_CFG.timeline_length)
 
 # City list and INSEE mapping
 secteur = API_CFG.secteur_insee
 data = list(secteur.keys())
 
-# TODO: Temporary list of factors for demonstration purposes. Replace with real factors based on data analysis.
-facteurs_list = ["Combinaison : Courbe serrée + Aquaplaning probable + Nuit sans éclairage",
-                 "Multiples collisions par temps de pluie à cette heure.",
-                    "Intersection complexe avec visibilité réduite.",
-                    "Zone de travaux avec signalisation insuffisante.",
-                    "Présence de piétons et de cyclistes à proximité.",
-                    "Historique d'accidents similaires à cet endroit.",
-                    "Conditions météorologiques défavorables (pluie, brouillard).",
-                    "Vitesse élevée enregistrée dans cette zone.",
-                    "Proximité d'une école ou d'un lieu de rassemblement.",
-                    "Signalisation routière peu claire ou absente.",
-                    "Route étroite avec peu d'espace pour manœuvrer.",
-                    "Présence de virages dangereux ou de pentes abruptes.",
-                    "Luminosité faible + visibilité réduite par brouillard localisé.",
-                    "Zone de forte affluence avec des interactions complexes entre véhicules et piétons.",
-                    "Historique d'accidents graves à cette intersection, souvent liés à des erreurs de jugement des conducteurs.",
-                    "Conditions météorologiques défavorables (pluie, neige)"
-                 ]
-
 try:
+    logger.info("Loading encoder from %s", ENCODER_PATH)
     encoder = joblib.load(ENCODER_PATH)
 except Exception as e:
+    logger.exception("Failed to load encoder from %s", ENCODER_PATH)
     raise RuntimeError(f"Error loading encoder: {e}")
 
 
 def prepare_data_for_prediction(payload,feature_names,time_series=False):
-    logger.info(f"Received prediction request with payload: {payload}")
+    logger.info("Received prediction request for %d city(ies)", len(payload.get("cities", [])))
     # Extract INSEE codes via the 'secteur' mapping dictionary
     unknown_cities = [city for city in payload["cities"] if city not in secteur]
     if unknown_cities:
@@ -72,11 +50,7 @@ def prepare_data_for_prediction(payload,feature_names,time_series=False):
     df = pd.read_csv(road_secteur_path, sep=";")
     df_secteur = df[df['com'].isin(insee_codes)].copy()
 
-    # # 3. Encode date and time features
-    # logger.info("Encoding date and time features")
-    # df_secteur = encode_date_time(df_secteur, timestamp=payload["timestamp"])
-
-    # 4. Encode meteorological and environmental features
+    # 3. Encode meteorological and environmental features
     logger.info("Encoding meteorological and environmental features")
     df_secteur = encode_meteorological_features(
         df_secteur,
@@ -84,9 +58,10 @@ def prepare_data_for_prediction(payload,feature_names,time_series=False):
         timestamp=payload["timestamp"],
         time_series=time_series,
         secteur=secteur,
+        n=TIMELINE_LENGTH,
     )
 
-    # 5. Encode categorical variables
+    # 4. Encode categorical variables
     logger.info("Encoding categorical variables")
     df_secteur = encode_categorical_values(df_secteur, encoder, ENCODED_COLS)
 
@@ -98,7 +73,8 @@ def prepare_data_for_prediction(payload,feature_names,time_series=False):
         raise ValueError(f"Missing features: {missing_sorted}")
     return df_secteur
 
-def model_prediction(payload,model,feature_names):
+
+def model_prediction(payload,model,feature_names,shap_explainer):
     """
     Predicts risk levels by municipality and address.
     Returns a dictionary (JSON format) containing municipalities, addresses and predictions.
@@ -114,18 +90,20 @@ def model_prediction(payload,model,feature_names):
     # Make predictions
     predictions = make_predictions(df_secteur, model, feature_names)
 
+    X_top, y_top = select_top_predictions(df_secteur,predictions, nb_top=DEFAULT_TOP_K)
+    factors = build_shap_factors(X_top, shap_explainer, feature_names, num_explanations=4)
+    
     # Extract top predictions
     top_prediction = build_top_predictions(
-        df_secteur,
-        predictions,
-        nb_top=DEFAULT_TOP_K,
+        X_top,
+        y_top,
         secteur=secteur,
-        facteurs_list=facteurs_list,
+        factors=factors,
     )
 
     # Return prediction results
-    logger.info({"status": "success", "data": top_prediction}) # Display top for verification
-    return {"status": "success", "data": top_prediction}
+    logger.info("Prediction completed successfully: %d top record(s)", len(top_prediction))
+    return {"status": "success", "top_k": DEFAULT_TOP_K, "data": top_prediction}
 
 
 def timeline_prediction(payload,model,feature_names):
@@ -159,7 +137,7 @@ def timeline_prediction(payload,model,feature_names):
         "status": "success",
         "data": timeline_results
     }
-    logger.info(result) # Display top for verification
+    logger.info("Timeline prediction completed successfully: %d timestamp(s)", len(timeline_results))
     return result
 
 if __name__ == "__main__":

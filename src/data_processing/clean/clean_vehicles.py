@@ -1,7 +1,5 @@
 import os
-import sys
 from src.data_processing.check_structure import drop_columns
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.custom_logger import logger
 
 def clean_vehicles(df,out_path,cluster_cat_vehicule):
@@ -20,7 +18,6 @@ def clean_vehicles(df,out_path,cluster_cat_vehicule):
     # Fill missing 'motor' values using the mode per vehicle category
     df['motor'] = (df['motor'].fillna(df.groupby('catv')['motor'].transform(lambda x: x.mode()[0])))
 
-    print("cluster_cat_vehicule => ", cluster_cat_vehicule)
     inverse_dict = {}
     for cluster, values in cluster_cat_vehicule.items():
         for value in values:
@@ -36,6 +33,6 @@ def clean_vehicles(df,out_path,cluster_cat_vehicule):
 
     # Save cleaned file
     df.to_csv(os.path.join(out_path, "vehicules.csv"), index=False)
-    print("    -> Cleaned 'vehicules' data saved to:", os.path.join(out_path, "vehicules.csv"))
+    logger.info("Cleaned 'vehicules' data saved to: %s", os.path.join(out_path, "vehicules.csv"))
 
     return df

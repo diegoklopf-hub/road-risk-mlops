@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 from src.common_utils import append_status
+from src.custom_logger import logger
 
 class SchemaManager:
     def __init__(self, schema):
@@ -15,11 +16,15 @@ class SchemaManager:
         return list(self.schema.get('COLUMNS', {}).keys())
 
 
-    def get_description(self, column_name):
+    def get_description(self, column_name,ignore_calib=False):
         """
         Returns the description for a specific column name.
         Example: get_description('mois') -> "Mois de l'accident"
         """
+
+        if ignore_calib:
+            column_name = re.sub(r'_-?\d+$', '', column_name)  
+
         # First access the column dictionary,
         # then fetch the value of the 'description' key
         column_info = self.schema.get('COLUMNS', {}).get(column_name)
@@ -28,6 +33,40 @@ class SchemaManager:
             return column_info['description']
         
         return f"Description not found for column: {column_name}"
+    
+    def get_short_description(self, column_name):
+        """
+        Extract column information based on a string pattern.
+        Expected format: 'column_name_value' or 'column_name'.
+        """
+        columns = {**self.schema.get('COLUMNS', {}), **self.schema.get('ADDITIONAL_ENCODED_COLUMNS', {})}
+        
+        # Case 1: the exact column exists in the schema (e.g., "atm")
+        if column_name in columns:
+            return columns[column_name].get('short_description')
+
+        # Case 2: search for a calibration suffix (split by the last '_')
+        if '_' in column_name:
+            col_name, calibration = column_name.rsplit('_', 1)
+            
+            if col_name in columns:
+                values = columns[col_name].get('values', {})
+                
+                # Convert calibration to int when possible for mapping lookup
+                try:
+                    cal_key = int(calibration)
+                except ValueError:
+                    cal_key = calibration
+                
+                if cal_key in values:
+                    return values[cal_key]
+                else:
+                    raise KeyError(f"La valeur '{calibration}' n'existe pas dans les 'values' de la colonne '{col_name}'.")
+        
+        # Case 3: column not found return short description if available, else a default message
+        logger.warning("Column '%s' not found in schema. Returning fallback description.", column_name)
+        return columns.get(column_name, {}).get('short_description', f"Description not found for column: {column_name}")
+
 
     def check_schema(self, columns_list, status_file, phase,ignore_calib=False, filter_use_for_fit=False):
         """

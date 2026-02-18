@@ -1,6 +1,7 @@
 import json
 from passlib.context import CryptContext
 from pathlib import Path
+from src.custom_logger import logger
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -14,4 +15,4 @@ Path("./data/secrets").mkdir(exist_ok=True)
 with open("./data/secrets/users_db.json", "w") as f:
     json.dump(users, f, indent=4)
 
-print("users_db.json initialization completed!")
+logger.info("users_db.json initialization completed!")

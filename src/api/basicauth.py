@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import json
 from pathlib import Path
@@ -16,21 +16,21 @@ def load_users_db():
         logger.info(f"Authentication: users_db file loaded!")
     else:
         users_db = {}
-        logger.info(f"Authentication: fail to load creds users_db file!")
+        logger.warning("Authentication: users_db secrets file not found.")
     return users_db
 
 def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
     users_db = load_users_db()
     hashed = users_db.get(credentials.username)
     if not hashed or not pwd_context.verify(credentials.password, hashed):
-        logger.info(f"Authentifcation failed for user: {credentials.username}")
+        logger.warning("Authentication failed for user: %s", credentials.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unauthorized",
             headers={"WWW-Authenticate": "Basic"},
         )
     
-    logger.info(f"Authentifcation successed for user: {credentials.username}")
+    logger.info("Authentication succeeded for user: %s", credentials.username)
 
     return credentials.username
 

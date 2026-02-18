@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 import os
 
@@ -6,7 +5,7 @@ import joblib
 import pandas as pd
 
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List
 
@@ -15,9 +14,6 @@ from src.common_utils import read_yaml
 from src.custom_logger import logger
 
 from datetime import datetime, timezone
-
-from inference_engine import model_prediction
-from src.common_utils import read_yaml
 from basicauth import authenticate
 
 # -------------------------------------------------------------------
@@ -32,6 +28,7 @@ CONFIG = read_yaml(Path("src/config.yaml"))
 API_CFG = CONFIG.api_inference
 
 MODEL_PATH = Path(path_prefix+API_CFG.model_path)
+EXPLAINER_PATH = Path(path_prefix+API_CFG.explainer_path)
 FEATURES_PATH = Path(path_prefix+API_CFG.features_path)
 TEMPLATE_PATH = Path(path_prefix+API_CFG.template_path)
 
@@ -44,13 +41,24 @@ data = list(secteur.keys())
 # -------------------------------------------------------------------
 
 try:
+    logger.info("Loading model from %s", MODEL_PATH)
     model = joblib.load(MODEL_PATH)
 except Exception as e:
+    logger.exception("Failed to load model from %s", MODEL_PATH)
     raise RuntimeError(f"Error loading model: {e}")
 
 try:
+    logger.info("Loading SHAP explainer from %s", EXPLAINER_PATH)
+    shap_explainer = joblib.load(EXPLAINER_PATH)
+except Exception as e:
+    logger.exception("Failed to load SHAP explainer from %s", EXPLAINER_PATH)
+    raise RuntimeError(f"Error loading explainer: {e}")
+
+try:
+    logger.info("Loading feature names from %s", FEATURES_PATH)
     feature_names = joblib.load(FEATURES_PATH)
 except Exception as e:
+    logger.exception("Failed to load feature names from %s", FEATURES_PATH)
     raise RuntimeError(f"Error loading feature names: {e}")
 
 
@@ -147,10 +155,12 @@ async def predict_v2(payload: PredictionInputV2, auth: None = Depends(authentica
         "timestamp": payload.timestamp
     }
     try:
-        preds = model_prediction(inputs, model, feature_names)
+        preds = model_prediction(inputs, model, feature_names,shap_explainer)
     except ValueError as exc:
+        logger.error(f"Value error during prediction: {exc}")
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
+        logger.exception("Unexpected error during prediction: %s", exc)
         raise HTTPException(status_code=500, detail=f"Prediction error: {exc}")
     logger.info(f">>>>> Endpoint /api/v2/predict completed <<<<<\n\nx=======x")
     return preds
@@ -173,10 +183,10 @@ async def risk_timeline(auth: None = Depends(authenticate)):
     try:
         timeline_data = timeline_prediction(inputs, model, feature_names)
     except ValueError as exc:
+        logger.error(f"Value error during timeline prediction: {exc}")
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
-        import traceback
-        logger.error(f"traceback error: {traceback.format_exc()}")
+        logger.exception("Unexpected timeline prediction error: %s", exc)
         raise HTTPException(status_code=500, detail=f"Timeline error: {exc}")
     logger.info(f"Timeline data: {timeline_data}")
     logger.info(f">>>>> Endpoint /api/risk-timeline completed <<<<<\n\nx=======x")

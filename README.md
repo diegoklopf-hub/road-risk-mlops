@@ -52,19 +52,32 @@ make user-init
 ```
 Cette commande exécute le script et crée le fichier users_db.json avec les mots de passe hachés, prêt à être utilisé par l’application.
 
-- **Clé API météo (OpenWeather)**
-   `OPENWEATHER_API_KEY="......"` - (/.env)
-
-## Démarrage Rapide
 ### 0) Configuration `.env`
 
 Créer un fichier `.env` à la racine du projet :
 ```bash
 OPENWEATHER_API_KEY="..."
 HOST_PROJECT_ROOT=/chemin/absolu/vers/SEP25-BMLE-MLOPS-ACCIDENTS
+AIRFLOW__CORE__LOAD_EXAMPLES:'False'
+AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL=30
+AIRFLOW__SCHEDULER__PARSING_PROCESSES=2
 ```
 
 `HOST_PROJECT_ROOT` est le chemin absolu du projet sur la machine hôte, nécessaire aux montages Docker/Airflow.
+
+**Pour les systèmes Unix (Linux, macOS, WSL2)** :
+```bash
+echo "AIRFLOW_UID=$(id -u)" >> .env
+echo "AIRFLOW_GID=$(getent group docker | cut -d: -f3)" >> .env
+sudo chown -R 50000:50000 logs
+sudo chmod -R 775 logs
+```
+
+Cela aligne les permissions du système de fichiers avec les exigences du conteneur Airflow.
+
+## Démarrage Rapide
+
+
 
 ### 1) Permissions Docker (WSL)
 
@@ -76,7 +89,10 @@ sudo chmod 666 /var/run/docker.sock
 ### Installation
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+# Linux/macOS
+source .venv/bin/activate
+# Windows (PowerShell)
+# .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
@@ -107,6 +123,7 @@ python src/pipeline/05_data_transformation/main.py
 python src/pipeline/06_resampling/main.py
 python src/pipeline/07_model_trainer/main.py
 python src/pipeline/08_model_evaluation/main.py
+python src/pipeline/09_shap_explicability/main.py
 ```
 
 ### Tests unitaires
@@ -195,6 +212,7 @@ Artefacts requis (configures dans `config.yaml`) :
 - `models/best_model.joblib`
 - `models/features.joblib`
 - `models/one_hot_encoder.joblib`
+- `models/shap_explainer.joblib`
 
 ## API S.A.V.E.R. (saver_app)
 
@@ -231,13 +249,15 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
 ```json
 {
   "status": "success",
+  "top_k": 5,
   "data": [
     {
       "commune": "Bassens",
       "adresse": "avenue de la république",
       "facteurs": "...",
       "prediction": 61.2345,
-      "stabilite": "➡️ Stable"
+      "risk_level": 6,
+      "risk_label": "MODÉRÉ"
     }
   ]
 }
@@ -251,7 +271,7 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
   "status": "success",
   "data": [
     {
-      "timestamp": "2026-02-10T22:00:00Z",
+      "timestamp": 1770760800,
       "risk_index": 42.1,
       "risk_level": 3,
       "risk_label": "Moderate",
@@ -291,7 +311,8 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   │   ├── 05_data_transformation
 │   │   ├── 06_resampling
 │   │   ├── 07_model_trainer
-│   │   ├─── 08_model_evaluation
+│   │   ├── 08_model_evaluation
+│   │   ├── 09_shap_explicability
 │   │   └── dags
 │   │       └── pipeline_dag.py    # Airflow dags
 │   ├── api/                       # API FastAPI

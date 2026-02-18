@@ -63,6 +63,5 @@ def drop_columns(df, cols_to_drop, logger, filename):
     """
     msg = f"{filename}: Drop the columns  {list(cols_to_drop)}"
     df = df.drop(columns=cols_to_drop)
-    print(msg)
     logger.info(msg)
     return df

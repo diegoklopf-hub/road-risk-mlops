@@ -95,3 +95,15 @@ class ModelEvaluationConfig:
     model_path: Path
     metric_file_name: Path
     mlflow_uri: Optional[str] = None
+
+# =========================
+# SHAP EXPLICABILITY
+# =========================
+
+@dataclass(frozen=True)
+class ShapExplicabilityConfig:
+    root_dir: Path
+    model_path: Path
+    X_train_path: Path
+    shap_explainer_path: Path
+    sample_size: int

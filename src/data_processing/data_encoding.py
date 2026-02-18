@@ -71,7 +71,7 @@ class DataEncodage:
         self.df = None
 
     def encode_cyclic_values(self):
-        print("""------------- 01 Encoding cyclic features -------------""")
+        logger.info("------------- Encoding cyclic features -------------")
         dtype_dict = {'dep': str, 'com': str}
         self.df = pd.read_csv(self.config.merged_data_path, dtype=dtype_dict)
 
@@ -108,7 +108,7 @@ class DataEncodage:
         return self.df
 
     def encode_categorical_values(self):
-        print("""------------- 02 Encode categorical features  -------------""")
+        logger.info("------------- Encode categorical features -------------")
         encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         encoded_data = encoder.fit_transform(self.df[self.config.encode_columns])
 
@@ -119,11 +119,11 @@ class DataEncodage:
         self.df = self.df.drop(columns=self.config.encode_columns)
         self.df = pd.concat([self.df, encoded_df], axis=1)
 
-        print(f"Encoded joblib saved to: {self.config.model_one_hot_encoder_path}")
+        logger.info(f"Encoded joblib saved to: {self.config.model_one_hot_encoder_path}")
         joblib.dump(encoder, self.config.model_one_hot_encoder_path)
 
     def encode_continue_score_grav(self):
-        print("""------------- 03 Encode continuous severity score -------------""")
+        logger.info("------------- Encode continuous severity score -------------")
         R_max_BL, R_max_BH, R_max_D = calculate_99th_percentile_grav(self.df)
 
         self.df["score_grav"] = self.df.apply(
@@ -139,7 +139,7 @@ class DataEncodage:
         )
 
     def validate_data_and_export(self):
-        print("------------- 04 Validating data structure and export -------------")
+        logger.info("------------- Validating data structure and export -------------")
 
         try:
 

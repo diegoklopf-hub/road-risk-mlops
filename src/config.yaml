@@ -78,13 +78,32 @@ model_evaluation:
   metric_file_name: metrics/metrics.json
   mlflow_uri: http://mlflow_server:5000
 
+shap_explicability:
+  root_dir: models
+  model_path: models/best_model.joblib
+  X_train_path: data/04_resampled/X_train.csv
+  shap_explainer_path: models/shap_explainer.joblib
+  sample_size: 2000
+
+
 api_inference:
   model_path: /models/best_model.joblib
+  explainer_path: /models/shap_explainer.joblib
   features_path: /models/features.joblib
   encoder_path: /models/one_hot_encoder.joblib
   road_secteur_path: /data/ref/road_secteur_bassens_current.csv
   template_path: /templates/saver_app.html
   top_k: 5
+  timeline_length: 8
+  risk_levels:
+    - { level: 10, threshold: 85, label: "CRITIQUE" }
+    - { level: 9, threshold: 80, label: "TRÈS ÉLEVÉ" }
+    - { level: 8, threshold: 77.5, label: "ÉLEVÉ" }
+    - { level: 7, threshold: 70, label: "SIGNIFICATIF" }
+    - { level: 6, threshold: 55, label: "MODÉRÉ" }
+    - { level: 5, threshold: 40, label: "MOYEN" }
+    - { level: 4, threshold: 30, label: "FAIBLE" }
+    - { level: 1, threshold: null, label: "NÉGLIGEABLE" }
   secteur_insee:
     Bassens: 33032
     Sainte-Eulalie: 33397

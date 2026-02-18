@@ -73,6 +73,6 @@ def clean_lieux(df,out_path):
 
     # Save cleaned file
     df.to_csv(os.path.join(out_path, "lieux.csv"), index=False)
-    print("    -> Cleaned 'lieux' data saved to:", os.path.join(out_path, "lieux.csv"))
+    logger.info("Cleaned 'lieux' data saved to: %s", os.path.join(out_path, "lieux.csv"))
 
     return df

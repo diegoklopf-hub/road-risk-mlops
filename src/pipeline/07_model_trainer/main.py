@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 import mlflow
 import mlflow.sklearn
-import os
 import time
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

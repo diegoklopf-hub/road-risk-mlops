@@ -63,9 +63,9 @@ def categorize_gender(sexe_series):
         float: Weighted score between 0 and 1; higher means more female representation.
     """
     counts = sexe_series.value_counts()
-    count_0 = counts.get(0.0, 0)   # 0 – Inconnu
-    count_1 = counts.get(1.0, 0)   # 1 – Homme
-    count_2 = counts.get(2.0, 0)   # 2 – Femme
+    count_0 = counts.get(0.0, 0)   # 0 – Unknown
+    count_1 = counts.get(1.0, 0)   # 1 – Male
+    count_2 = counts.get(2.0, 0)   # 2 – Female
     return (count_1 * 0 + count_0 * 0.5 + count_2 * 1) / len(sexe_series)
 
 

@@ -298,6 +298,6 @@ def clean_characteristics(df,out_path):
 
     # Reorder columns and save cleaned file
     df.to_csv(os.path.join(out_path, "caracteristiques.csv"), index=False)
-    print("    -> Cleaned 'caracteristiques' data saved to:", os.path.join(out_path, "caracteristiques.csv"))
+    logger.info("Cleaned 'caracteristiques' data saved to: %s", os.path.join(out_path, "caracteristiques.csv"))
 
     return df

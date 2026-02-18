@@ -29,7 +29,7 @@ class DataTransformation:
 
         Returns X_train, X_test, y_train, y_test.
         """
-        print("""------------- 01 Split train/test -------------""")
+        logger.info("------------- Split train/test -------------")
         data = pd.read_csv(self.config.input_path)
 
         X = data.drop(columns=["score_grav"])
@@ -73,7 +73,7 @@ class DataTransformation:
         function matches expanded column names (OneHotEncoder) back to the
         base column name using regex before applying scaling.
         """
-        print("""------------- 02 Normalizing features -------------""")
+        logger.info("------------- Normalizing features -------------")
         # Get cols_to_normalize config  
         cols_used_for_prediction = []
         for col_name, properties in self.config.schema.items():
@@ -105,7 +105,7 @@ class DataTransformation:
         handles expanded/dummified column names by mapping them back to base
         names using regex.
         """
-        print("""------------- 03 Feature selection -------------""")
+        logger.info("------------- Feature selection -------------")
 
         # Build list of base columns configured to be used for prediction
         cols_used_for_prediction = []

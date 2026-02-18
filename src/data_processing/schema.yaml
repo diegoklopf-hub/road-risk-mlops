@@ -8,49 +8,57 @@ COLUMNS:
   an:
     type: int64
     description: "Année de l'accident"
+    short_description: "Période temporelle (tendances annuelles)"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   mois:
     type: int64
     description: "Mois de l'accident"
+    short_description: "Saisonnalité mensuelle"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   jour:
     type: int64
     description: "Jour de l'accident"
+    short_description: "Jour du mois"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   week_day:
     type: int64
     description: "Jour de la semaine"
+    short_description: "Saisonnalité hebdomadaire"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   Hours:
     type: int64
     description: "Heure de l'accident"
+    short_description: "Heure de la journée (trafic, visibilité)"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   hrmn:
     type: string
     description: "Heure et minutes de l'accident"
+    short_description: "Moment précis de l'accident"
     normalized: True
     use_for_fit: True
     category: TEMPORAL
   lum:
     type: int64
     description: "Lumière : conditions d'éclairage"
-    values: {1: "Plein jour", 2: "Crépuscule ou aube", 3: "Nuit sans éclairage public", 4: "Nuit avec éclairage public non allumé", 5: "Nuit avec éclairage public allumé"}
+    short_description: "Niveau de visibilité"
+    values: {-1: "Non renseigné", 1: "Plein jour", 2: "Crépuscule ou aube", 3: "Nuit sans éclairage", 4: "Nuit, éclairage non allumé", 5: "Nuit, éclairage allumé"}
     normalized: False
     use_for_fit: True
     category: ENVIRONMENT
   agg:
     type: int64
     description: "Localisation"
+    short_description: "Contexte urbain ou hors agglomération"
     values: {1: "Hors agglomération", 2: "En agglomération"}
     normalized: False
     use_for_fit: True
@@ -58,159 +66,183 @@ COLUMNS:
   int:
     type: int64
     description: "Intersection"
-    values: {1: "Hors intersection", 2: "Intersection en X", 3: "Intersection en T", 4: "Intersection en Y", 5: "Intersection à plus de 4 branches", 6: "Giratoire", 7: "Place", 8: "Passage à niveau", 9: "Autre intersection"}
+    short_description: "Complexité du carrefour"
+    values: {1: "Hors intersection", 2: "Carrefour en X", 3: "Carrefour en T", 4: "Carrefour en Y", 5: "Carrefour > 4 branches", 6: "Giratoire", 7: "Place", 8: "Passage à niveau", 9: "Autre intersection"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   atm:
     type: int64
     description: "Conditions atmosphériques"
-    values: {-1: "Non renseigné", 1: "Normale", 2: "Pluie légère", 3: "Pluie forte", 4: "Neige - grêle", 5: "Brouillard - fumée", 6: "Vent fort - tempête", 7: "Temps éblouissant", 8: "Temps couvert", 9: "Autre"}
+    short_description: "Dégradation des conditions météo"
+    values: {-1: "Non renseigné", 1: "Conditions normales", 2: "Pluie légère", 3: "Pluie forte", 4: "Neige ou grêle", 5: "Brouillard ou fumée", 6: "Vent fort ou tempête", 7: "Temps éblouissant", 8: "Temps couvert", 9: "Autre condition atm."}
     normalized: False
     use_for_fit: True
     category: ENVIRONMENT
   col:
     type: int64
     description: "Type de collision"
-    values: {-1: "Non renseigné", 1: "Deux véhicules - frontale", 2: "Deux véhicules – par l’arrière", 3: "Deux véhicules – par le coté", 4: "Trois véhicules et plus – en chaîne", 5: "Trois véhicules et plus - collisions multiples", 6: "Autre collision", 7: "Sans collision"}
+    short_description: "Cinématique du choc (énergie absorbée)"
+    values: {-1: "Non renseigné", 1: "Collision frontale", 2: "Collision par l'arrière", 3: "Collision latérale", 4: "Carambolage en chaîne", 5: "Collisions multiples", 6: "Autre collision", 7: "Sans collision"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   com:
     type: string
     description: "Commune (Code INSEE)"
+    short_description: "Localisation communale"
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   lat:
     type: float64
     description: "Latitude"
+    short_description: "Position géographique (zone à risque)"
     normalized: True
     use_for_fit: True
     category: STRUCTURE
   long:
     type: float64
     description: "Longitude"
+    short_description: "Position géographique (zone à risque)"
     normalized: True
     use_for_fit: True
     category: STRUCTURE
   dep:
     type: string
     description: "Département (Code INSEE)"
+    short_description: "Contexte territorial"
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   catr:
     type: int64
     description: "Catégorie de route"
-    values: {1: "Autoroute", 2: "Route nationale", 3: "Route Départementale", 4: "Voie Communale", 5: "Hors réseau public", 6: "Parc de stationnement ouvert à la circulation publique", 7: "Routes de métropole urbaine", 9: "autre"}
+    short_description: "Type de voie (vitesse, aménagement)"
+    values: {1: "Autoroute", 2: "Route nationale", 3: "Route départementale", 4: "Voie communale", 5: "Hors réseau public", 6: "Parking public", 7: "Route de métropole urbaine", 9: "Autre voie"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   v1:
     type: int64
     description: "Indice numérique du numéro de route"
+    short_description: "Identifiant de route"
     normalized: True
     use_for_fit: True
     category: STRUCTURE
   circ:
     type: int64
     description: "Régime de circulation"
-    values: {-1: "Non renseigné", 1: "A sens unique", 2: "Bidirectionnel", 3: "A chaussées séparées", 4: "Avec voies d’affectation variable"}
+    short_description: "Organisation du trafic"
+    values: {-1: "Non renseigné", 1: "Sens unique", 2: "Bidirectionnel", 3: "Chaussées séparées", 4: "Voies d'affectation variable"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   nbv:
     type: int64
     description: "Nombre total de voies de circulation"
+    short_description: "Capacité routière (flux, dépassements)"
     normalized: True
     use_for_fit: False
     category: OTHERS
   plan:
     type: int64
     description: "Tracé en plan"
-    values: {-1: "Non renseigné", 1: "Partie rectiligne", 2: "En courbe à gauche", 3: "En courbe à droite", 4: "En S"}
+    short_description: "Géométrie de la route"
+    values: {-1: "Non renseigné", 1: "Tracé rectiligne", 2: "Courbe à gauche", 3: "Courbe à droite", 4: "Tracé en S"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   surf:
     type: int64
     description: "Etat de la surface"
-    values: {-1: "Non renseigné", 1: "Normale", 2: "Mouillée", 3: "Flaques", 4: "Inondée", 5: "Enneigée", 6: "Boue", 7: "Verglacée", 8: "Corps gras – huile", 9: "Autre"}
+    short_description: "Adhérence de la chaussée"
+    values: {-1: "Non renseigné", 1: "Surface normale", 2: "Chaussée mouillée", 3: "Flaques d'eau", 4: "Chaussée inondée", 5: "Chaussée enneigée", 6: "Boue sur chaussée", 7: "Verglas", 8: "Corps gras ou huile", 9: "Autre état de surface"}
     normalized: False
     use_for_fit: True
     category: ENVIRONMENT
   prof:
     type: int64
     description: "Profil en long décrit la déclivité de la route à l'endroit de l'accident"
-    values: {-1: "Non renseigné", 1: "Plat", 2: "Pente", 3: "Sommet de côte", 4: "Bas de côte"}
+    short_description: "Déclivité de la route"
+    values: {-1: "Non renseigné", 1: "Route plate", 2: "En pente", 3: "Sommet de côte", 4: "Bas de côte"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   vma:
     type: int64
-    description: "Vitesse maximale autorisée sur le lieu et au moment de l’accident"
+    description: "Vitesse maximale autorisée sur le lieu et au moment de l'accident"
+    short_description: "Vitesse maximale autorisée"
     normalized: True
     use_for_fit: True
     category: STRUCTURE
   senc:
     type: int64
     description: "Sens de circulation"
-    values: {-1: "Non renseigné", 0: "Inconnu", 1: "Sens croissant (PK/PR/Adresse)", 2: "Sens décroissant (PK/PR/Adresse)", 3: "Absence de repère"}
+    short_description: "Direction de circulation du véhicule"
+    values: {-1: "Non renseigné", 0: "Sens inconnu", 1: "Sens croissant", 2: "Sens décroissant", 3: "Absence de repère"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   vosp:
     type: int64
-    description: "Existence d’une voie réservée sur le lieu de l'accident"
-    values: {-1: "Non renseigné", 0: "Sans objet", 1: "Piste cyclable", 2: "Bande cyclable", 3: "Voie réservée"}
+    description: "Existence d'une voie réservée sur le lieu de l'accident"
+    short_description: "Présence d'aménagement cyclable"
+    values: {-1: "Non renseigné", 0: "Pas de voie réservée", 1: "Piste cyclable", 2: "Bande cyclable", 3: "Voie réservée"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   larrout:
     type: int64
     description: "Largeur de la chaussée affectée à la circulation des véhicules (en m)"
+    short_description: "Largeur disponible (marges de manœuvre)"
     normalized: True
     use_for_fit: True
     category: STRUCTURE
   infra:
     type: int64
     description: "Aménagement - Infrastructure"
-    values: {-1: "Non renseigné", 0: "Aucun", 1: "Souterrain - tunnel", 2: "Pont - autopont", 3: "Bretelle d'échangeur ou de raccordement", 4: "Voie ferrée", 5: "Carrefour aménagé", 6: "Zone piétonne", 7: "Zone de péage", 8: "Chantier", 9: "Autres"}
+    short_description: "Type d'infrastructure spéciale"
+    values: {-1: "Non renseigné", 0: "Aucun aménagement", 1: "Tunnel ou souterrain", 2: "Pont ou autopont", 3: "Bretelle d'échangeur", 4: "Voie ferrée", 5: "Carrefour aménagé", 6: "Zone piétonne", 7: "Zone de péage", 8: "Chantier", 9: "Autre infrastructure"}
     normalized: False
     use_for_fit: True
     category: STRUCTURE
   situ:
     type: int64
     description: "Situation de l'accident"
-    values: {-1: "Non renseigné", 0: "Aucun", 1: "Sur chaussée", 2: "Sur bande d’arrêt d’urgence", 3: "Sur accotement", 4: "Sur trottoir", 5: "Sur piste cyclable", 6: "Sur autre voie spéciale", 8: "Autres"}
+    short_description: "Zone de l'accident"
+    values: {-1: "Non renseigné", 0: "Situation inconnue", 1: "Sur chaussée", 2: "Sur bande d'arrêt d'urgence", 3: "Sur accotement", 4: "Sur trottoir", 5: "Sur piste cyclable", 6: "Sur voie spéciale", 8: "Autre situation"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   choc:
     type: int64
     description: "Point de choc initial"
-    values: {-1: "Non renseigné", 0: "Aucun", 1: "Avant", 2: "Avant droit", 3: "Avant gauche", 4: "Arrière", 5: "Arrière droit", 6: "Arrière gauche", 7: "Côté droit", 8: "Côté gauche", 9: "Chocs multiples"}
+    short_description: "Zone d'impact sur le véhicule"
+    values: {-1: "Non renseigné", 0: "Aucun choc", 1: "Choc avant", 2: "Choc avant droit", 3: "Choc avant gauche", 4: "Choc arrière", 5: "Choc arrière droit", 6: "Choc arrière gauche", 7: "Choc côté droit", 8: "Choc côté gauche", 9: "Chocs multiples"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   manv:
     type: int64
     description: "Manoeuvre principale avant l'accident"
-    values: {-1: "Non renseigné", 0: "Inconnue", 1: "Sans changement de direction", 2: "Même sens, même file", 13: "S'insérant", 15: "Tournant à gauche", 17: "Dépassant à gauche", 19: "Traversant la chaussée", 21: "Manoeuvre de stationnement", 24: "S'arrêtant / stationné"}
+    short_description: "Manœuvre à risque précédant l'accident"
+    values: {-1: "Non renseigné", 0: "Manœuvre inconnue", 1: "Tout droit", 2: "Même sens, même file", 13: "Insertion", 15: "Virage à gauche", 17: "Dépassement à gauche", 19: "Traversée de chaussée", 21: "Manœuvre de stationnement", 24: "Arrêt ou stationnement"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   motor:
     type: int64
     description: "Type de motorisation du véhicule"
-    values: {-1: "Non renseigné", 0: "Inconnue", 1: "Hydrocarbures", 2: "Hybride électrique", 3: "Electrique", 4: "Hydrogène", 5: "GPL/GNV", 6: "Air comprimé"}
+    short_description: "Type de motorisation du véhicule"
+    values: {-1: "Non renseigné", 0: "Motorisation inconnue", 1: "Hydrocarbures", 2: "Hybride électrique", 3: "Électrique", 4: "Hydrogène", 5: "GPL ou GNV", 6: "Air comprimé"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   place:
     type: int64
     description: "Place occupée dans le véhicule"
+    short_description: "Position dans le véhicule"
     values: {-1: "Non renseigné", 1: "Conducteur", 2: "Passager avant", 3: "Passager arrière droit", 4: "Passager arrière gauche", 5: "Passager arrière milieu", 10: "Piéton"}
     normalized: False
     use_for_fit: TFalse
@@ -218,108 +250,113 @@ COLUMNS:
   trajet:
     type: int64
     description: "Motif du déplacement"
-    values: {-1: "Non renseigné", 0: "Non précisé", 1: "Domicile – travail", 2: "Domicile – école", 3: "Courses – achats", 4: "Utilisation professionnelle", 5: "Promenade – loisirs", 9: "Autre"}
+    short_description: "Contexte du trajet"
+    values: {-1: "Non renseigné", 0: "Motif non précisé", 1: "Trajet domicile-travail", 2: "Trajet domicile-école", 3: "Courses ou achats", 4: "Usage professionnel", 5: "Promenade ou loisirs", 9: "Autre motif"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   sexe:
     type: int64
     description: "Sexe de l'usager"
-    values: {0: "Inderminé",1: "Masculin", 2: "Féminin"}
+    short_description: "Genre de l'usager"
+    values: {0: "Genre indéterminé", 1: "Masculin", 2: "Féminin"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   locp:
     type: int64
     description: "Localisation du piéton"
-    values: {-1: "Non renseigné", 0: "Sans objet", 1: "Sur chaussée (+50m passage)", 3: "Sur passage piéton (sans signalisation)", 4: "Sur passage piéton (avec signalisation)", 5: "Sur trottoir"}
+    short_description: "Présence de piéton"
+    values: {-1: "Non renseigné", 0: "Pas de piéton", 1: "Piéton sur chaussée", 3: "Piéton hors passage (sans signal.)", 4: "Piéton sur passage signalisé", 5: "Piéton sur trottoir"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   actp:
     type: int64
     description: "Action du piéton"
-    values: {-1: "Non renseigné", 0: "Non renseigné ou sans objet", 3: "Traversant", 4: "Masqué", 5: "Jouant - courant"}
+    short_description: "Comportement du piéton"
+    values: {-1: "Non renseigné", 0: "Action piéton inconnue", 3: "Piéton traversant", 4: "Piéton masqué", 5: "Piéton jouant ou courant"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   etatp:
     type: int64
     description: "État du piéton (seul ou non)"
-    values: {-1: "Non renseigné", 1: "Seul", 2: "Accompagné", 3: "En groupe"}
+    short_description: "Isolement du piéton"
+    values: {-1: "Non renseigné", 1: "Piéton seul", 2: "Piéton accompagné", 3: "Piéton en groupe"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   obsm:
     type: int64
     description: "Obstacle mobile heurté"
-    values: {-1: "Non renseigné", 0: "Aucun", 1: "Piéton", 2: "Véhicule", 4: "Véhicule sur rail", 5: "Animal domestique", 6: "Animal sauvage", 9: "Autre"}
+    short_description: "Présence d'obstacle mobile"
+    values: {-1: "Non renseigné", 0: "Aucun obstacle mobile", 1: "Piéton heurté", 2: "Véhicule heurté", 4: "Véhicule sur rail", 5: "Animal domestique", 6: "Animal sauvage", 9: "Autre obstacle mobile"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   obs:
     type: int64
     description: "Obstacle fixe heurté"
-    values: {-1: "Non renseigné", 0: "Sans objet", 1: "Véhicule en stationnement", 3: "Arbre", 8: "Bordure de trottoir", 13: "Fossé", 16: "Station d'essence"}
+    short_description: "Présence d'obstacle fixe"
+    values: {-1: "Non renseigné", 0: "Route sans obstacle (excès de vitesse)", 1: "Véhicule en stationnement", 2: "Arbre", 3: "Glissière métallique", 4: "Glissière béton", 5: "Autre glissière", 6: "Bâtiment, mur, pile de pont", 7: "Support de signalisation verticale ou poste d'appel d'urgence", 8: "Poteau", 9: "Mobilier urbain", 10: "Parapet", 11: "Ilot, refuge, borne haute", 12: "Bordure de trottoir", 13: "Fossé, talus, paroi rocheuse", 14: "Autre obstacle fixe sur chaussée", 15: "Autre obstacle fixe sur trottoir ou accotement", 16: "Sortie de chaussée sans obstacle", 17: "Buse – tête d'aqueduc"}
     normalized: False
     use_for_fit: True
     category: CRASH_TYPOLOGY
   catv_cluster:
     type: int64
     description: "Regroupement des catégories de véhicules (Clusters)"
-    values: {
-        0: "VU (1,5T <= PTAC <= 3,5T)",
-        1: "VL seul",
-        2: "Autre",
-        3: "Motocyclette > 125 cm3",
-        4: "Bicyclette",
-        5: "Scooter < 50 cm3",
-        6: "Scooter (50 cm3 < cm3 <= 125 cm3)",
-        7: "EDP à moteur",
-        8: "Piéton"
-    }
+    short_description: "Type de véhicule impliqué"
+    values: {0: "Véhicule utilitaire", 1: "Voiture légère", 2: "Autre véhicule", 3: "Moto > 125 cm³", 4: "Bicyclette", 5: "Scooter < 50 cm³", 6: "Scooter 50-125 cm³", 7: "EDP motorisé", 8: "Piéton"}
     normalized: False
     use_for_fit: False
     category: OTHERS
   nb_usagers:
     type: int64
     description: "Nombre d'usager impliqués dans l'accident"
+    short_description: "Nombre de personnes exposées"
     normalized: True
     use_for_fit: False
     category: OTHERS
   nb_vehicules:
     type: int64
     description: "Nombre véhicules impliqués dans l'accident"
+    short_description: "Nombre de véhicules en collision"
     normalized:  True
     use_for_fit: False
     category: OTHERS
   securite_usager_min:
     type: int64
     description: "Minimum du niveau d'équipement de sécurité mis par les usagers"
+    short_description: "Usager le moins protégé"
     normalized:  True
     use_for_fit: False
     category: OTHERS
   securite_usager_mean:
     type: int64
     description: "Moyenne du niveau d'équipement de sécurité mis par les usagers"
+    short_description: "Protection moyenne des usagers"
     normalized: True
     use_for_fit: False
     category: OTHERS
   age_min:
     type: int64
     description: "Usager avec l'age minimum"
+    short_description: "Présence d'usager très jeune"
     normalized: True
     use_for_fit: False
     category: OTHERS
   age_max:
     type: int64
     description: "Usager avec l'age maximum"
+    short_description: "Présence d'usager âgé"
     normalized: True
     use_for_fit: False
     category: OTHERS
   age_mean:
     type: int64
     description: "Age moyen des usagers"
+    short_description: "Profil d'âge moyen des usagers impliqués"
     normalized: True
     use_for_fit: False
     category: OTHERS
@@ -351,43 +388,49 @@ COLUMNS:
 ADDITIONAL_ENCODED_COLUMNS:
   day_of_year_sin:
     type: int64
-    description: "Encodage cyclique (sinus) du jour de l'année" 
+    description: "Encodage cyclique (sinus) du jour de l'année"
+    short_description: "Jour de l'année à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   day_of_year_cos:
     type: int64
-    description: "Encodage cyclique (cosinus) du jour de l'année"  
+    description: "Encodage cyclique (cosinus) du jour de l'année"
+    short_description: "Jour de l'année à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   minute_sin:
     type: int64
-    description: "Encodage cyclique (sinus) le l'heure/minute dans la journée"  
+    description: "Encodage cyclique (sinus) de l'heure/minute dans la journée"
+    short_description: "Heure de la journée à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   minute_cos:
     type: int64
-    description: "Encodage cyclique (cosinus) le l'heure/minute dans la journée" 
+    description: "Encodage cyclique (cosinus) de l'heure/minute dans la journée"
+    short_description: "Heure de la journée à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   week_day_sin:
     type: int64
-    description: "Encodage cyclique (sinus) du jour de la semaine"  
+    description: "Encodage cyclique (sinus) du jour de la semaine"
+    short_description: "Jour de la semaine à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   week_day_cos:
     type: int64
-    description: "Encodage cyclique (cosinus) du jour de la semaine" 
+    description: "Encodage cyclique (cosinus) du jour de la semaine"
+    short_description: "Jour de la semaine à risque"
     normalized: False
     use_for_fit: True
     category: TEMPORAL
   score_grav:
     type: int64
-    description: "Score continue [0-100] du niveau de gravite de l'accident" 
+    description: "Score continue [0-100] du niveau de gravite de l'accident"
     normalized: False
     use_for_fit: False
     category: TARGET
