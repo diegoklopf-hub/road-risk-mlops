@@ -28,12 +28,14 @@ TIMELINE_LENGTH = int(API_CFG.timeline_length)
 secteur = API_CFG.secteur_insee
 data = list(secteur.keys())
 
-try:
+def load_encoder_model():
     logger.info("Loading encoder from %s", ENCODER_PATH)
-    encoder = joblib.load(ENCODER_PATH)
-except Exception as e:
-    logger.exception("Failed to load encoder from %s", ENCODER_PATH)
-    raise RuntimeError(f"Error loading encoder: {e}")
+    try:
+        encoder = joblib.load(ENCODER_PATH)
+    except Exception as e:
+        logger.exception("Failed to load encoder from %s", ENCODER_PATH)
+        raise RuntimeError(f"Error loading encoder: {e}")
+    return encoder
 
 
 def prepare_data_for_prediction(payload,feature_names,time_series=False):
@@ -63,6 +65,7 @@ def prepare_data_for_prediction(payload,feature_names,time_series=False):
 
     # 4. Encode categorical variables
     logger.info("Encoding categorical variables")
+    encoder = load_encoder_model()
     df_secteur = encode_categorical_values(df_secteur, encoder, ENCODED_COLS)
 
     # Security check for API

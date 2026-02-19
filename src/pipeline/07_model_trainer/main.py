@@ -61,8 +61,8 @@ class ModelTrainerPipeline:
                 # 🔥 log model in this nested run
                 mlflow.sklearn.log_model(
                     sk_model=model,
-                    artifact_path="model",
-                    registered_model_name="saver_accident_model"
+                    artifact_path="model_prediction",
+                    registered_model_name="xgboost_saver_accident_model"
                 )
 
                 mlflow.set_tag("stage", "training")

@@ -45,26 +45,32 @@ data = list(secteur.keys())
 # Load the model and feature list
 # -------------------------------------------------------------------
 
-try:
+def load_prediction_model():
     logger.info("Loading model from %s", MODEL_PATH)
-    model = joblib.load(MODEL_PATH)
-except Exception as e:
-    logger.exception("Failed to load model from %s", MODEL_PATH)
-    raise RuntimeError(f"Error loading model: {e}")
+    try:
+        model = joblib.load(MODEL_PATH)
+    except Exception as e:
+        logger.exception("Failed to load model from %s", MODEL_PATH)
+        raise RuntimeError(f"Error loading model: {e}")
+    return model
 
-try:
+def load_shap_explainer():
     logger.info("Loading SHAP explainer from %s", EXPLAINER_PATH)
-    shap_explainer = joblib.load(EXPLAINER_PATH)
-except Exception as e:
-    logger.exception("Failed to load SHAP explainer from %s", EXPLAINER_PATH)
-    raise RuntimeError(f"Error loading explainer: {e}")
+    try:
+        shap_explainer = joblib.load(EXPLAINER_PATH)
+    except Exception as e:
+        logger.exception("Failed to load SHAP explainer from %s", EXPLAINER_PATH)
+        raise RuntimeError(f"Error loading explainer: {e}")
+    return shap_explainer
 
-try:
+def load_feature_names():
     logger.info("Loading feature names from %s", FEATURES_PATH)
-    feature_names = joblib.load(FEATURES_PATH)
-except Exception as e:
-    logger.exception("Failed to load feature names from %s", FEATURES_PATH)
-    raise RuntimeError(f"Error loading feature names: {e}")
+    try:
+        feature_names = joblib.load(FEATURES_PATH)
+    except Exception as e:
+        logger.exception("Failed to load feature names from %s", FEATURES_PATH)
+        raise RuntimeError(f"Error loading feature names: {e}")
+    return feature_names
 
 # -------------------------------------------------------------------
 # Prometheus Metrics
@@ -99,9 +105,12 @@ INFERENCE_ERRORS = Counter(
 # -------------------------------------------------------------------
 
 app = FastAPI(
-    title="Accidents Severity Prediction API",
-    description="API de prédiction de la gravité des accidents routiers",
-    version="2.0.0",
+    title="Fast API",
+    description="API de prédiction, timeline des risques, routes et monitoring",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
 )
 
 
@@ -121,12 +130,12 @@ class PredictionInputV2(BaseModel):
 # Health check
 # -------------------------------------------------------------------
 
-@app.get("/api/v1/health")
+@app.get("/api/health")
 def health_check(auth: None = Depends(authenticate)):
     return {
         "status": "ok",
         "model_loaded": True,
-        "n_features": len(feature_names)
+        "n_features": len(load_feature_names())
     }
 
 
@@ -135,15 +144,40 @@ def health_check(auth: None = Depends(authenticate)):
 # Prediction endpoint
 # -------------------------------------------------------------------
 
-@app.post("/api/v1/predict")
+@app.post("/api/v1/predict",
+    summary="Test inférence à partir des features pré traitées",
+    description="""
+    **Description détaillée :**
+    Prédit la probabilité d'un accident à partir des features fournies.
+
+    **Exemple de payload :**
+    ```json
+    {
+        "features": {
+            "feature1": 1,
+            "feature2": 0,
+            ...
+        }
+    }
+    ```
+    **Réponses possibles :**
+    - 200 : Prédiction réussie ; retourne la prédiction
+    - 400 : Features manquantes ou invalides.
+    - 500 : Erreur interne lors de la prédiction.
+    """,
+    response_description="Un dictionnaire contenant la prédiction et éventuellement les probabilités.",
+    tags=["Inférence_Sandbox"]
+)
 def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):    
     start_time = time.time()
     endpoint = "/api/v1/predict"
+    model = load_prediction_model()
 
     try:
         input_dict = payload.features
 
         # Check for missing features
+        feature_names = load_feature_names()
         missing_features = set(feature_names) - set(input_dict.keys())
         if missing_features:
             REQUEST_COUNT.labels("POST", endpoint, "400").inc()
@@ -193,13 +227,37 @@ def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):
             time.time() - start_time
         )
     
-@app.post("/api/v2/predict")
+@app.post("/api/v2/predict",
+    summary="Prédire la probabilité d'un accident + explications SHAP",
+    description="""
+    **Description détaillée :**
+    Prédit la probabilité d'un accident à partir de la date fournie, des villes sélectionnées et des informations météorologiques.
+    Retourne les routes les plus à risque avec leur niveau de risque et une explication basée sur le modèle SHAP.
+
+    **Exemple de payload :**
+    ```json
+    {
+       "cities": ["City1", "City2"],
+       "timestamp": "2026-02-18T12:00:00Z"
+    }
+    ```
+    **Réponses possibles :**
+    - 200 : Prédiction réussie avec routes à risque identifiées
+    - 400 : Données d'entrée invalides
+    - 500 : Erreur interne lors de la prédiction
+    """,
+    response_description="Dictionnaire contenant les prédictions et explications SHAP pour chaque route.",
+    tags=["Inférence_Production"]
+)
 async def predict_v2(payload: PredictionInputV2, auth: None = Depends(authenticate)):
     """
-    V2 Endpoint: Receives business requirements and orchestrates transformation before inference.
+    Endpoint V2 : reçoit les paramètres métier et orchestre la transformation avant l'inférence.
     """
     start_time = time.time()
     endpoint = "/api/v2/predict"
+    model = load_prediction_model()
+    feature_names = load_feature_names()
+    shap_explainer = load_shap_explainer()
 
     logger.info(f">>>>> Call /api/v2/predict called <<<<<")
     # 1. Prepare the payload
@@ -209,7 +267,7 @@ async def predict_v2(payload: PredictionInputV2, auth: None = Depends(authentica
     }
     try:
         inference_start = time.time()
-        preds = model_prediction(inputs, model, feature_names,shap_explainer)
+        preds = model_prediction(inputs, model, feature_names, shap_explainer)
         INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
         REQUEST_COUNT.labels("POST", endpoint, "200").inc()
     except ValueError as exc:
@@ -229,13 +287,31 @@ async def predict_v2(payload: PredictionInputV2, auth: None = Depends(authentica
     logger.info(f">>>>> Endpoint /api/v2/predict completed <<<<<\n\nx=======x")
     return preds
 
-@app.post("/api/risk-timeline")
+
+@app.post("/api/risk-timeline",
+    summary="Chronologie des risques maximaux d'accidents sur 24h",
+    description="""
+    **Description détaillée :**
+    Récupère la chronologie des risques d'accidents pour les heures suivantes.
+    Utilise l'heure actuelle comme point de départ et les prévisions météorologiques
+    pour retourner, par créneau horaire, le niveau de risque maximal.
+
+    **Réponses possibles :**
+    - 200 : Timeline calculée avec succès
+    - 400 : Données d'entrée invalides
+    - 500 : Erreur interne lors du calcul
+    """,
+    response_description="Dictionnaire contenant la chronologie des risques par ville et par heure.",
+    tags=["Inférence_Production"]
+)
 async def risk_timeline(auth: None = Depends(authenticate)):
     """
-    Endpoint to retrieve the risk timeline from business requirements.
+    Retourne la chronologie des risques selon les règles métier.
     """
     start_time = time.time()
     endpoint = "/api/risk-timeline"
+    model = load_prediction_model()
+    feature_names = load_feature_names()
 
     logger.info(f">>>>> Call /api/risk-timeline called <<<<<")
     
@@ -272,7 +348,20 @@ async def risk_timeline(auth: None = Depends(authenticate)):
     logger.info(f">>>>> Endpoint /api/risk-timeline completed <<<<<\n\nx=======x")
     return timeline_data
 
-@app.get("/api/roads")
+
+@app.get("/api/roads",
+    summary="Charge la base de données des routes (infrastructure)",
+    description="""
+    **Description détaillée :**
+    Retourne la base de données des routes et secteurs utilisée pour les prédictions.
+
+    **Réponses possibles :**
+    - 200 : Liste des routes/secteurs retournée avec succès.
+    - 500 : Erreur interne lors du chargement des données.
+    """,
+    response_description="Liste des routes/secteurs au format JSON.",
+    tags=["Typologie (Data Management)"]
+)
 def get_roads(auth: None = Depends(authenticate)):
     logger.info(f">>>>> Call GET /api/roads called <<<<<")
     load_file_path = path_prefix+API_CFG.road_secteur_path
@@ -284,7 +373,29 @@ def get_roads(auth: None = Depends(authenticate)):
     logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
     return df.to_dict(orient="records")
 
-@app.put("/api/roads")
+@app.put("/api/roads",
+    summary="Met à jour la base de données des routes (infrastructure)",
+    description="""
+    **Description détaillée :**
+    Remplace le contenu du fichier de routes/secteurs par les lignes fournies.
+
+    **Exemple de payload :**
+    ```json
+    [
+      {
+        "nom_voie": "Avenue de la République",
+        "commune": "Bassens"
+      }
+    ]
+    ```
+    **Réponses possibles :**
+    - 200 : Mise à jour effectuée avec succès.
+    - 400 : Données d'entrée invalides.
+    - 500 : Erreur interne lors de l'écriture du fichier.
+    """,
+    response_description="Statut de confirmation de la mise à jour.",
+    tags=["Typologie (Data Management)"]
+)
 def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
     logger.info(f">>>>> Call PUT /api/roads called <<<<<")
     df = pd.DataFrame(rows)
@@ -297,14 +408,39 @@ def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
 # Main
 # -------------------------------------------------------------------
 
-@app.get("/")
+@app.get("/",
+    summary="Retourne la page d'accueil de l'API",
+    description="""
+    **Description détaillée :**
+    Retourne la page HTML d'accueil de l'application API.
+
+    **Réponses possibles :**
+    - 200 : Page HTML servie avec succès.
+    - 500 : Erreur interne lors du chargement du template.
+    """,
+    response_description="Page HTML d'accueil.",
+    tags=["Système"]
+)
 def health_check_api(auth: None = Depends(authenticate)):
     return FileResponse(TEMPLATE_PATH)
 
 # -------------------------------------------------------------------
 # Endpoint Authentication
 # -------------------------------------------------------------------
-@app.get("/api/login")
+@app.get("/api/login",
+    summary="Valide les identifiants Basic Auth",
+    description="""
+    **Description détaillée :**
+    Vérifie les identifiants transmis via l'en-tête Authorization (Basic Auth).
+    Retourne les informations utilisateur si l'authentification est valide.
+
+    **Réponses possibles :**
+    - 200 : Utilisateur authentifié.
+    - 401 : Identifiants invalides ou absents.
+    """,
+    response_description="Statut d'authentification et informations utilisateur.",
+    tags=["Authentification"]
+)
 def login(current_user: dict = Depends(authenticate)):
     """
     Valide username/password via Basic Auth.
@@ -314,6 +450,17 @@ def login(current_user: dict = Depends(authenticate)):
 # -------------------------------------------------------------------
 # Endpoint metrics
 # -------------------------------------------------------------------
-@app.get("/metrics")
+@app.get("/api/metrics",
+    summary="Expose les métriques Prometheus",
+    description="""
+    **Description détaillée :**
+    Expose les métriques applicatives au format Prometheus pour la supervision.
+
+    **Réponses possibles :**
+    - 200 : Métriques retournées avec succès.
+    """,
+    response_description="Flux texte des métriques Prometheus.",
+    tags=["Monitoring"]
+)
 def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

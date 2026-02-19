@@ -32,9 +32,6 @@ COPY src/data_processing/schema_manager.py /app/src/data_processing/schema_manag
 COPY src/data_processing/schema.yaml /app/src/data_processing/schema.yaml
 COPY src/config.py /app/src/config.py
 
-# Copy model artifacts (read-only on API side)
-COPY models /models
-
 # Expose internal port
 EXPOSE 8000
 

@@ -173,6 +173,7 @@ services:
       - ./logs/run_logs/:/app/logs/run_logs
       - ./data/ref:/data/ref/:rw
       - ./data/secrets/users_db.json:/run/secrets/users_db:ro
+      - ./models:/models:ro
     env_file:
       - .env
       

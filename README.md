@@ -35,45 +35,25 @@ Les prédictions sont calculées à partir d'input combinant des variables struc
   - `deployments/nginx/certs/nginx.key`
 - **Création des utilisateurs**
 
-Le script **src/generate_userdb.py** initialise un dictionnaire users contenant les utilisateurs et leurs mots de passe hachés avec Argon2 :
+### 2) Initialisation du Projet
 
-```json
-users = {
-    "admin": pwd_context.hash("XXXXX")  # remplace "XXXXX" par le mot de passe souhaité
-}
-```
+A la première utilisation, lancez l'initialisation complète :
 
-- Clé : nom d’utilisateur
-- Valeur : mot de passe haché avec Argon2
-
-**Important** : après avoir renseigné le mot de passe de l’utilisateur, lancer la commande :
 ```bash
-make user-init
-```
-Cette commande exécute le script et crée le fichier users_db.json avec les mots de passe hachés, prêt à être utilisé par l’application.
-
-### 0) Configuration `.env`
-
-Créer un fichier `.env` à la racine du projet :
-```bash
-OPENWEATHER_API_KEY="..."
-HOST_PROJECT_ROOT=/chemin/absolu/vers/SEP25-BMLE-MLOPS-ACCIDENTS
-AIRFLOW__CORE__LOAD_EXAMPLES:'False'
-AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL=30
-AIRFLOW__SCHEDULER__PARSING_PROCESSES=2
+make init
 ```
 
-`HOST_PROJECT_ROOT` est le chemin absolu du projet sur la machine hôte, nécessaire aux montages Docker/Airflow.
+Cette commande configure automatiquement :
+- Les répertoires de base (`data/`, `models/`, `logs/`, `metrics/`)
+- Le fichier `.env` avec les variables d'environnement nécessaires
+- Les permissions Airflow sur systèmes Linux/WSL
+- La base de données utilisateurs (`users_db.json`)
 
-**Pour les systèmes Unix (Linux, macOS, WSL2)** :
-```bash
-echo "AIRFLOW_UID=$(id -u)" >> .env
-echo "AIRFLOW_GID=$(getent group docker | cut -d: -f3)" >> .env
-sudo chown -R 50000:50000 logs
-sudo chmod -R 775 logs
-```
+Le script détecte votre système et applique les configurations appropriées (Linux natif, WSL2, macOS).
 
-Cela aligne les permissions du système de fichiers avec les exigences du conteneur Airflow.
+**Note** : Lors de la première exécution, vous devrez créer un utilisateur administrateur en fournissant un nom d'utilisateur et un mot de passe.
+
+
 
 ## Démarrage Rapide
 

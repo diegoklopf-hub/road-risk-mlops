@@ -34,7 +34,7 @@ class ShapExplicabilityPipeline:
         duration = time.time() - start
 
 
-        return duration
+        return shap_exp, duration
 
 
     def main(self):
@@ -49,7 +49,14 @@ class ShapExplicabilityPipeline:
 
                 mlflow.log_param("step", "09_shap_explicability")
 
-                duration = self.run()
+                shap_exp, duration = self.run()
+    
+                 # 🔥 log model in this nested run
+                mlflow.sklearn.log_model(
+                    sk_model=shap_exp,
+                    artifact_path="model_shap_explainer",
+                    registered_model_name="shap_saver_accident_model"
+                )
 
                 mlflow.log_metric("evaluation_duration_sec", duration)
 

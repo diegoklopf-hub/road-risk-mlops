@@ -121,6 +121,7 @@ class DataEncodage:
 
         logger.info(f"Encoded joblib saved to: {self.config.model_one_hot_encoder_path}")
         joblib.dump(encoder, self.config.model_one_hot_encoder_path)
+        return encoder
 
     def encode_continue_score_grav(self):
         logger.info("------------- Encode continuous severity score -------------")

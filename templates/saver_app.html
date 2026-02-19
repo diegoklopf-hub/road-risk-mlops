@@ -798,7 +798,7 @@
             </div>
             <form id="loginForm">
                 <div class="form-group"><label>Identifiant</label><input type="text" id="loginUsername" placeholder="Ex: cpt.hydrant" value="cpt.hydrant"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" value="simulation2026"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" value=""></div>
                 <button type="submit" class="login-btn">Se connecter</button>
             </form>
         </div>
@@ -1034,29 +1034,29 @@
                 <div class="service-card-desc">Stockage des artefacts — fichiers, datasets, modèles sérialisés.</div>
                 <span class="service-card-url">http://localhost:9001</span>
             </a>
-            <a href="http://localhost:8080" target="_blank" class="service-card nginx">
+            <a href="https://localhost/api/docs" target="_blank" class="service-card nginx">
                 <div class="service-card-header">
                     <div class="service-card-icon">🔀</div>
-                    <div class="service-card-name">Nginx (API)</div>
+                    <div class="service-card-name">API Docs (Swagger)</div>
                 </div>
-                <div class="service-card-desc">Reverse proxy — accès à l'API accidents-api et services internes.</div>
-                <span class="service-card-url">http://localhost:8080</span>
+                <div class="service-card-desc">Documentation interactive de l'API — endpoints, schémas, tests.</div>
+                <span class="service-card-url">https://localhost/api/docs</span>
             </a>
-            <a href="http://localhost:8080/metrics" target="_blank" class="service-card metrics">
+            <a href="https://localhost/api/metrics" target="_blank" class="service-card metrics">
                 <div class="service-card-header">
                     <div class="service-card-icon">📡</div>
                     <div class="service-card-name">API Metrics</div>
                 </div>
                 <div class="service-card-desc">Endpoint Prometheus brut — métriques exposées par FastAPI.</div>
-                <span class="service-card-url">http://localhost:8080/metrics</span>
+                <span class="service-card-url">https://localhost/api/metrics</span>
             </a>
-            <a href="http://localhost:8080/health" target="_blank" class="service-card health">
+            <a href="https://localhost/api/health" target="_blank" class="service-card health">
                 <div class="service-card-header">
                     <div class="service-card-icon">💚</div>
                     <div class="service-card-name">API Health</div>
                 </div>
                 <div class="service-card-desc">Healthcheck de l'API — vérification de disponibilité du service.</div>
-                <span class="service-card-url">http://localhost:8080/health</span>
+                <span class="service-card-url">https://localhost/api/health</span>
             </a>
         </div>
     </div>
@@ -1192,7 +1192,7 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('[data-page="dashboard"]').classList.add('active');
 
-            showToast(`Bienvenue ${user.display_name}`, 'success');
+            showToast(`Bienvenue ${user}`, 'success');
 
             // Load data now that we're authenticated
             loadDataFromAPI();
@@ -1211,7 +1211,7 @@
         document.getElementById('editorTab').classList.toggle('hidden', !isLoggedIn);
         document.getElementById('monitoringTab').classList.toggle('hidden', !isLoggedIn);
         if (currentUser) {
-            document.getElementById('currentUserName').textContent = currentUser.username;
+            document.getElementById('currentUserName').textContent = currentUser;
             document.getElementById('userAvatar').textContent = getInitials(currentUser);
         }
     }
