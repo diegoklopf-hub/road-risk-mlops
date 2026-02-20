@@ -28,7 +28,6 @@ init:
 	@if [ "$$(uname -s)" = "Linux" ] && [ ! -d /mnt/c ]; then \
 		echo "  => Configuration des permissions Airflow (UID/GID)..."; \
 		echo "AIRFLOW_UID=$$(id -u)" >> .env; \
-		echo "AIRFLOW_GID=$$(getent group docker | cut -d: -f3)" >> .env; \
 		sudo chown -R 50000:50000 logs; \
 		sudo chmod -R 775 logs; \
 	fi
