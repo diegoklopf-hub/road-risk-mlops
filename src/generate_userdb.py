@@ -14,20 +14,24 @@ def initialize_user_db():
 
     pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-    # Plain-text passwords for initialization (dev/test)
-    users = {
-        username: pwd_context.hash(password)
-    }
-
-    # Save to a JSON file
+    # Load existing users if the file exists
     secrets_path = Path("./data/secrets")
     secrets_path.mkdir(parents=True, exist_ok=True)
-    
     file_path = secrets_path / "users_db.json"
+
+    users = {}
+    if file_path.exists():
+        with open(file_path, "r") as f:
+            users = json.load(f)
+
+    # Add or update the user
+    users[username] = pwd_context.hash(password)
+
+    # Save everything
     with open(file_path, "w") as f:
         json.dump(users, f, indent=4)
 
-    logger.info(f"Initialisation de {file_path} terminée pour l'utilisateur : {username}")
+    logger.info(f"Utilisateur {username} ajouté/mis à jour dans {file_path}")
 
 if __name__ == "__main__":
     initialize_user_db()

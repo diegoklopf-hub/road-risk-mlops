@@ -1,6 +1,8 @@
 PROJECT_NAME=sep25-bmle-mlops-accidents
 SHELL := /bin/bash
 
+all: init start-project
+
 init:
 	@echo "--- Initialisation du projet ---"
 	
@@ -17,6 +19,7 @@ init:
 		echo "AIRFLOW__CORE__LOAD_EXAMPLES=False" >> .env; \
 		echo "AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL=30" >> .env; \
 		echo "AIRFLOW__SCHEDULER__PARSING_PROCESSES=2" >> .env; \
+		echo "AIRFLOW_GID=0" >> .env; \
 	else \
 		echo "  => Fichier .env déjà présent."; \
 	fi
@@ -64,9 +67,10 @@ init:
 		  python -m src.generate_userdb "$$username" "$$password"; }; } || \
 		echo "  => users_db.json existe déjà. Étape ignorée."
 	
+	@echo "Construction des images docker ..."
+	./build_images.sh
+
 	@echo "--- Initialisation terminée avec succès ! ---"
-
-
 	
 
 start-project:
@@ -104,7 +108,9 @@ pipeline:
 	python run_pipeline_mlflow.py  --start $(or $(start),1)
 
 user-init:
-	python src/generate_userdb.py
+	@read -p "Username: " username; \
+	read -s -p "Password: " password; \
+	echo; \
+	python src/generate_userdb.py "$$username" "$$password"
 
-#INIT WSL : sudo chmod 666 /var/run/docker.sock
 
