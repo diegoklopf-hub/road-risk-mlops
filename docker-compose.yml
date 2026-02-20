@@ -1,26 +1,49 @@
 x-airflow-common: &airflow-common
   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.8.1}
+
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+
+    # -------- DAG parsing safe ----------
     AIRFLOW__DAG_PROCESSOR__PARSING_PROCESSES: "1"
     AIRFLOW__DAG_PROCESSOR__MIN_FILE_PROCESS_INTERVAL: "60"
-    AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: "10"
-    AIRFLOW__SCHEDULER__JOB_HEARTBEAT_SEC: "10"
-    AIRFLOW__SCHEDULER__POOL_METRICS_INTERVAL: "30.0"
-    AIRFLOW__SCHEDULER__RUNNING_METRICS_INTERVAL: "60.0"
+
+    # -------- Scheduler stability ----------
+    AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: "60"
+    AIRFLOW__SCHEDULER__JOB_HEARTBEAT_SEC: "60"
+    AIRFLOW__SCHEDULER__LOCAL_TASK_JOB_HEARTBEAT_SEC: "60"
+    AIRFLOW__SCHEDULER__ZOMBIE_TASK_THRESHOLD: "7200"   # 2h avant kill
+    AIRFLOW__SCHEDULER__POOL_METRICS_INTERVAL: "60"
+    AIRFLOW__SCHEDULER__RUNNING_METRICS_INTERVAL: "60"
+
+    # -------- DB ----------
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+
+    # -------- Security ----------
     AIRFLOW__CORE__FERNET_KEY: ""
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__API__AUTH_BACKEND: "airflow.api.auth.backend.basic_auth"
+
+    # -------- SMTP ----------
     AIRFLOW__SMTP__SMTP_HOST: "smtp.gmail.com"
     AIRFLOW__SMTP__SMTP_PORT: 587
     AIRFLOW__SMTP__SMTP_USER: "de.airflow@gmail.com"
     AIRFLOW__SMTP__SMTP_PASSWORD: "cfsrvkongsobheta"
     AIRFLOW__SMTP__SMTP_MAIL_FROM: "de.airflow@gmail.com"
-    AIRFLOW__CELERY__WORKER_CONCURRENCY: "8"
+
+    # -------- Celery FIX CRUCIAL ----------
+    AIRFLOW__CELERY__WORKER_CONCURRENCY: "1"
+    AIRFLOW__CELERY__WORKER_PREFETCH_MULTIPLIER: "1"
+    AIRFLOW__CELERY__TASK_ACKS_LATE: "true"
+
+    # -------- DockerOperator stability ----------
+    AIRFLOW__CORE__PARALLELISM: "2"
+    AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "1"
+
+    # -------- misc ----------
     PYTHONPATH: /opt/airflow/dags
     GIT_PYTHON_REFRESH: "quiet"
     HOST_PROJECT_ROOT: ${HOST_PROJECT_ROOT}
@@ -173,6 +196,7 @@ services:
       - ./logs/run_logs/:/app/logs/run_logs
       - ./data/ref:/data/ref/:rw
       - ./data/secrets/users_db.json:/run/secrets/users_db:ro
+      - ./models:/models:ro
     env_file:
       - .env
       

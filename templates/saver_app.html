@@ -55,6 +55,12 @@
             --risk-4: #a3e635;
             --risk-4-soft: rgba(163,230,53,0.12);
             --risk-4-border: rgba(163,230,53,0.3);
+            --risk-3: #4ade80;
+            --risk-3-soft: rgba(74,222,128,0.12);
+            --risk-3-border: rgba(74,222,128,0.3);
+            --risk-2: #34d399;
+            --risk-2-soft: rgba(52,211,153,0.12);
+            --risk-2-border: rgba(52,211,153,0.3);
             --risk-1: #22c55e;
             --risk-1-soft: rgba(34,197,94,0.12);
             --risk-1-border: rgba(34,197,94,0.25);
@@ -342,7 +348,7 @@
         /* ── RISK TIMELINE ── */
         .timeline-grid {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
+            grid-template-columns: repeat(8, 1fr);
             gap: 0.4rem;
             margin-bottom: 1.25rem;
         }
@@ -392,6 +398,12 @@
         .timeline-slot.risk-4 .timeline-slot-bar { background: var(--risk-4); }
         .timeline-slot.risk-4 .timeline-slot-label { color: var(--risk-4); }
         .timeline-slot.risk-4 { border-color: var(--risk-4-border); background: var(--risk-4-soft); }
+        .timeline-slot.risk-3 .timeline-slot-bar { background: var(--risk-3); }
+        .timeline-slot.risk-3 .timeline-slot-label { color: var(--risk-3); }
+        .timeline-slot.risk-3 { border-color: var(--risk-3-border); background: var(--risk-3-soft); }
+        .timeline-slot.risk-2 .timeline-slot-bar { background: var(--risk-2); }
+        .timeline-slot.risk-2 .timeline-slot-label { color: var(--risk-2); }
+        .timeline-slot.risk-2 { border-color: var(--risk-2-border); background: var(--risk-2-soft); }
         .timeline-slot.risk-1 .timeline-slot-bar { background: var(--risk-1); }
         .timeline-slot.risk-1 .timeline-slot-label { color: var(--risk-1); }
         .timeline-slot.risk-1 { border-color: var(--risk-1-border); background: var(--risk-1-soft); }
@@ -435,8 +447,22 @@
         .risk-badge.risk-5::before { background: var(--risk-5); }
         .risk-badge.risk-4 { background: var(--risk-4-soft); color: var(--risk-4); border: 1px solid var(--risk-4-border); }
         .risk-badge.risk-4::before { background: var(--risk-4); }
+        .risk-badge.risk-3 { background: var(--risk-3-soft); color: var(--risk-3); border: 1px solid var(--risk-3-border); }
+        .risk-badge.risk-3::before { background: var(--risk-3); }
+        .risk-badge.risk-2 { background: var(--risk-2-soft); color: var(--risk-2); border: 1px solid var(--risk-2-border); }
+        .risk-badge.risk-2::before { background: var(--risk-2); }
         .risk-badge.risk-1 { background: var(--risk-1-soft); color: var(--risk-1); border: 1px solid var(--risk-1-border); }
         .risk-badge.risk-1::before { background: var(--risk-1); }
+
+        .factor-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .factor-chip {
+            font-size: 0.68rem; font-weight: 500;
+            padding: 0.2rem 0.55rem; border-radius: 100px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
 
         .trend-up { color: var(--danger); font-weight: 600; font-size: 0.82rem; }
         .trend-stable { color: var(--text-muted); font-size: 0.82rem; }
@@ -449,6 +475,8 @@
         tr.risk-6-row { border-left: 3px solid var(--risk-6); }
         tr.risk-5-row { border-left: 3px solid var(--risk-5); }
         tr.risk-4-row { border-left: 3px solid var(--risk-4); }
+        tr.risk-3-row { border-left: 3px solid var(--risk-3); }
+        tr.risk-2-row { border-left: 3px solid var(--risk-2); }
         tr.risk-1-row { border-left: 3px solid var(--risk-1); }
 
         /* ── EDITOR ── */
@@ -654,67 +682,6 @@
             content: ''; flex: 1; height: 1px; background: var(--border);
         }
 
-        .dashboards-table { width: 100%; border-collapse: collapse; }
-        .dashboards-table th {
-            text-align: left; padding: 0.65rem 1rem;
-            font-size: 0.62rem; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--text-muted); font-weight: 600;
-            background: var(--bg-input); border-bottom: 1px solid var(--border);
-        }
-        .dashboards-table td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.82rem; color: var(--text-secondary);
-        }
-        .dashboards-table tr:last-child td { border-bottom: none; }
-        .dashboards-table tr:hover { background: var(--bg-input); }
-        .dashboard-name { color: var(--text-title); font-weight: 600; }
-        .dashboard-link {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.72rem; color: var(--success);
-            text-decoration: none; transition: var(--transition);
-        }
-        .dashboard-link:hover { color: #4ade80; text-decoration: underline; }
-
-        .monitoring-flow {
-            display: flex; align-items: center; gap: 0.5rem;
-            flex-wrap: wrap; justify-content: center;
-            padding: 1.25rem; margin-bottom: 1.25rem;
-        }
-        .flow-node {
-            font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
-            padding: 0.45rem 0.75rem; border-radius: var(--radius-sm);
-            white-space: nowrap; font-weight: 500;
-        }
-        .flow-node.api-node { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); color: #06b6d4; }
-        .flow-node.prom-node { background: var(--fire-soft); border: 1px solid var(--fire-border); color: var(--fire-500); }
-        .flow-node.graf-node { background: var(--success-soft); border: 1px solid var(--success-border); color: var(--success); }
-        .flow-node.drift-node { background: var(--purple-soft); border: 1px solid rgba(167,139,250,0.25); color: var(--purple); }
-        .flow-node.infra-node { background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); color: #22d3ee; }
-        .flow-arrow { color: var(--text-muted); font-size: 1rem; }
-
-        .promql-table { width: 100%; border-collapse: collapse; }
-        .promql-table th {
-            text-align: left; padding: 0.65rem 1rem;
-            font-size: 0.62rem; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--text-muted); font-weight: 600;
-            background: var(--bg-input); border-bottom: 1px solid var(--border);
-        }
-        .promql-table td {
-            padding: 0.6rem 1rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.78rem; color: var(--text-secondary);
-        }
-        .promql-table tr:last-child td { border-bottom: none; }
-        .promql-table tr:hover { background: var(--bg-input); }
-        .promql-code {
-            font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-            background: rgba(0,0,0,0.25); padding: 0.2rem 0.5rem;
-            border-radius: 4px; color: var(--fire-400);
-            user-select: all; cursor: pointer;
-        }
-        .promql-metric { color: var(--text-title); font-weight: 500; }
-
         /* ── FOOTER ── */
         footer {
             background: var(--bg-card); border-top: 1px solid var(--border);
@@ -786,7 +753,7 @@
             .stat-cards { flex-direction: column; }
             .caserne-tag { display: none; }
             .logo-subtitle { display: none; }
-            .timeline-grid { grid-template-columns: repeat(5, 1fr); }
+            .timeline-grid { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
@@ -831,7 +798,7 @@
             </div>
             <form id="loginForm">
                 <div class="form-group"><label>Identifiant</label><input type="text" id="loginUsername" placeholder="Ex: cpt.hydrant" value="cpt.hydrant"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" value="simulation2026"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" value=""></div>
                 <button type="submit" class="login-btn">Se connecter</button>
             </form>
         </div>
@@ -931,38 +898,12 @@
                             <th>Segment routier</th>
                             <th>Commune</th>
                             <th>Niveau de risque</th>
-                            <th>Facteurs déterminants (Modèle)</th>
-                            <th>Tendance</th>
+                            <th>Facteurs déterminants (Modèle shap)</th>
                         </tr>
                     </thead>
                     <tbody id="predictionResults">
-                        <tr class="risk-8-row">
-                            <td><strong>Voie rapide Bassens-Ambès</strong></td>
-                            <td>Bassens</td>
-                            <td><span class="risk-badge risk-8">Élevé</span></td>
-                            <td>Courbe serrée + Aquaplaning probable + Nuit sans éclairage</td>
-                            <td class="trend-up">↗ Hausse</td>
-                        </tr>
-                        <tr class="risk-6-row">
-                            <td><strong>Avenue de la Libération</strong></td>
-                            <td>Lormont</td>
-                            <td><span class="risk-badge risk-6">Modéré</span></td>
-                            <td>Historique BAAC : Multiples collisions par temps de pluie</td>
-                            <td class="trend-stable">→ Stable</td>
-                        </tr>
-                        <tr class="risk-6-row">
-                            <td><strong>Rocade A630 — Échangeur 1</strong></td>
-                            <td>Lormont</td>
-                            <td><span class="risk-badge risk-6">Modéré</span></td>
-                            <td>Luminosité faible + visibilité réduite par brouillard</td>
-                            <td class="trend-down">↘ Baisse</td>
-                        </tr>
                         <tr>
-                            <td>Avenue des Guerlandes</td>
-                            <td>Bassens</td>
-                            <td><span class="risk-badge low">Faible</span></td>
-                            <td>Conditions standard, éclairage public fonctionnel</td>
-                            <td class="trend-stable">→ Stable</td>
+                            <td colspan="4" style="text-align:center; color: var(--text-secondary);">Chargement des prédictions...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1093,29 +1034,29 @@
                 <div class="service-card-desc">Stockage des artefacts — fichiers, datasets, modèles sérialisés.</div>
                 <span class="service-card-url">http://localhost:9001</span>
             </a>
-            <a href="http://localhost:8080" target="_blank" class="service-card nginx">
+            <a href="https://localhost/api/docs" target="_blank" class="service-card nginx">
                 <div class="service-card-header">
                     <div class="service-card-icon">🔀</div>
-                    <div class="service-card-name">Nginx (API)</div>
+                    <div class="service-card-name">API Docs (Swagger)</div>
                 </div>
-                <div class="service-card-desc">Reverse proxy — accès à l'API accidents-api et services internes.</div>
-                <span class="service-card-url">http://localhost:8080</span>
+                <div class="service-card-desc">Documentation interactive de l'API — endpoints, schémas, tests.</div>
+                <span class="service-card-url">https://localhost/api/docs</span>
             </a>
-            <a href="http://localhost:8080/metrics" target="_blank" class="service-card metrics">
+            <a href="https://localhost/api/metrics" target="_blank" class="service-card metrics">
                 <div class="service-card-header">
                     <div class="service-card-icon">📡</div>
                     <div class="service-card-name">API Metrics</div>
                 </div>
                 <div class="service-card-desc">Endpoint Prometheus brut — métriques exposées par FastAPI.</div>
-                <span class="service-card-url">http://localhost:8080/metrics</span>
+                <span class="service-card-url">https://localhost/api/metrics</span>
             </a>
-            <a href="http://localhost:8080/health" target="_blank" class="service-card health">
+            <a href="https://localhost/api/health" target="_blank" class="service-card health">
                 <div class="service-card-header">
                     <div class="service-card-icon">💚</div>
                     <div class="service-card-name">API Health</div>
                 </div>
                 <div class="service-card-desc">Healthcheck de l'API — vérification de disponibilité du service.</div>
-                <span class="service-card-url">http://localhost:8080/health</span>
+                <span class="service-card-url">https://localhost/api/health</span>
             </a>
         </div>
     </div>
@@ -1131,9 +1072,9 @@
 <!-- Alert Modal -->
 <div class="modal-overlay" id="alertModal">
     <div class="modal">
-        <div class="modal-header">🚨 Alerte risque élevé — Prochaines 6h</div>
+        <div class="modal-header">🚨 Alerte risque élevé — Prochaines 9h</div>
         <div class="modal-body">
-            <p id="alertSummary">Des créneaux à risque <strong>élevé ou très élevé</strong> ont été détectés dans les 6 prochaines heures. Envoyer une alerte par mail à l'équipe de garde.</p>
+            <p id="alertSummary">Des créneaux à risque <strong>élevé ou très élevé</strong> ont été détectés dans les 9 prochaines heures. Envoyer une alerte par mail à l'équipe de garde.</p>
             <div class="form-group" style="margin-bottom: 0.75rem;">
                 <label>Destinataire(s)</label>
                 <input type="email" id="alertEmail" placeholder="equipe-garde@sdis33.fr" value="equipe-garde@sdis33.fr">
@@ -1158,6 +1099,9 @@
     let currentUser = JSON.parse(sessionStorage.getItem('saver_user') || 'null');
 
 
+
+    // Utilitaire global
+    const pad = n => String(n).padStart(2, '0');
 
     // Timeline risk data (simulated)
     let timelineData = [];
@@ -1248,7 +1192,7 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('[data-page="dashboard"]').classList.add('active');
 
-            showToast(`Bienvenue ${user.display_name}`, 'success');
+            showToast(`Bienvenue ${user}`, 'success');
 
             // Load data now that we're authenticated
             loadDataFromAPI();
@@ -1267,7 +1211,7 @@
         document.getElementById('editorTab').classList.toggle('hidden', !isLoggedIn);
         document.getElementById('monitoringTab').classList.toggle('hidden', !isLoggedIn);
         if (currentUser) {
-            document.getElementById('currentUserName').textContent = currentUser.username;
+            document.getElementById('currentUserName').textContent = currentUser;
             document.getElementById('userAvatar').textContent = getInitials(currentUser);
         }
     }
@@ -1364,7 +1308,6 @@ function restoreSession() {
             // Calcul de l'heure de fin pour l'affichage textuel
             const now = new Date();
             const startH = now.getHours();
-            const pad = n => String(n).padStart(2, '0');
 
             // ── MISE À JOUR MÉTÉO / LUMINOSITÉ / ALERTE depuis le 1er créneau ──
             const firstSlot = data[0];
@@ -1420,7 +1363,8 @@ function restoreSession() {
                 10: 'risk-10', 9: 'risk-9',
                 8: 'risk-8', 7: 'risk-7',
                 6: 'risk-6', 5: 'risk-5',
-                4: 'risk-4', 1: 'risk-1'
+                4: 'risk-4', 3: 'risk-3',
+                2: 'risk-2', 1: 'risk-1'
             };
             
             // Itération sur chaque créneau renvoyé par l'API
@@ -1459,28 +1403,28 @@ function restoreSession() {
     }
 
     function updateAlertButton() {
-        // Check if any of the first 3 slots (next 6h) are high or very-high
-        const next6h = timelineData.slice(0, 3);
-        const hasHighRisk = next6h.some(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
+        // Check if any of the first 3 slots (next 9h) are high or very-high
+        const next9h = timelineData.slice(0, 3);
+        const hasHighRisk = next9h.some(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
         const btn = document.getElementById('alertBtn');
+        btn.style.display = 'inline-flex';
         if (hasHighRisk) {
-            btn.style.display = 'inline-flex';
+            btn.style.opacity = '1';
             btn.classList.add('pulse-alert');
         } else {
-            btn.style.display = 'inline-flex';
             btn.style.opacity = '0.5';
+            btn.classList.remove('pulse-alert');
         }
     }
 
     // ── ALERT MODAL ──
     function openAlertModal() {
-        const next6h = timelineData.slice(0, 3);
-        const highSlots = next6h.filter(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
+        const next9h = timelineData.slice(0, 3);
+        const highSlots = next9h.filter(s => s.riskClass === 'risk-10' || s.riskClass === 'risk-9' || s.riskClass === 'risk-8');
         if (highSlots.length === 0) {
-            showToast('Aucun risque élevé détecté dans les 6 prochaines heures', 'success');
+            showToast('Aucun risque élevé détecté dans les 9 prochaines heures', 'success');
             return;
         }
-        const pad = n => String(n).padStart(2, '0');
         const details = highSlots.map(s => `${pad(s.hour)}h–${pad((s.hour+3)%24)}h : ${s.riskLabel}`).join(', ');
         document.getElementById('alertSummary').innerHTML =
             `Créneaux à risque détectés : <strong>${details}</strong>.<br>Envoyer une alerte par mail à l'équipe de garde.`;
@@ -1522,22 +1466,26 @@ function restoreSession() {
             const result = await response.json();
             if (result.status === 'success') {
                 const predictions = result.data;
+                const targetRows = Number(result.top_k) || predictions.length;
                 const tbody = document.getElementById('predictionResults');
                 tbody.innerHTML = '';
-                predictions.forEach(item => {
+                const rowsToRender = predictions.slice(0, targetRows);
+                rowsToRender.forEach(item => {
                     const tr = document.createElement('tr');
                     // Utilise directement le label du backend
                     const riskClassMap = {
                         10: 'risk-10', 9: 'risk-9',
                         8: 'risk-8', 7: 'risk-7',
                         6: 'risk-6', 5: 'risk-5',
-                        4: 'risk-4', 1: 'risk-1'
+                        4: 'risk-4', 3: 'risk-3',
+                        2: 'risk-2', 1: 'risk-1'
                     };
                     const trClassMap = {
                         10: 'risk-10-row', 9: 'risk-9-row',
                         8: 'risk-8-row', 7: 'risk-7-row',
                         6: 'risk-6-row', 5: 'risk-5-row',
-                        4: 'risk-4-row', 1: 'risk-1-row'
+                        4: 'risk-4-row', 3: 'risk-3-row',
+                        2: 'risk-2-row', 1: 'risk-1-row'
                     };
                     const riskClass = riskClassMap[item.risk_level] || 'risk-1';
                     if (trClassMap[item.risk_level]) tr.className = trClassMap[item.risk_level];
@@ -1545,11 +1493,22 @@ function restoreSession() {
                         <td><strong>${item.adresse}</strong></td>
                         <td>${item.commune}</td>
                         <td><span class="risk-badge ${riskClass}">${item.risk_label}</span></td>
-                        <td>${item.facteurs}</td>
-                        <td class="trend-stable">${item.stabilite}</td>
+                        <td><div class="factor-chips">${item.facteurs.split('+').map(f => `<span class="factor-chip">${f.trim()}</span>`).join('')}</div></td>
                     `;
                     tbody.appendChild(tr);
                 });
+
+                for (let i = rowsToRender.length; i < targetRows; i++) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>—</strong></td>
+                        <td>—</td>
+                        <td><span class="risk-badge risk-1">N/A</span></td>
+                        <td>Données insuffisantes pour cette ligne</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+
                 showToast('Prédictions mises à jour', 'success');
             } else { showToast('Erreur lors de la prédiction', 'error'); }
         } catch (error) {
@@ -1716,7 +1675,6 @@ function restoreSession() {
     document.addEventListener('DOMContentLoaded', () => {
         // Init date/time to now
         const now = new Date();
-        const pad = n => String(n).padStart(2, '0');
         const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
         
         // Date : entre aujourd'hui et maintenant + 3 jours

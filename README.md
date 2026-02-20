@@ -35,36 +35,29 @@ Les prédictions sont calculées à partir d'input combinant des variables struc
   - `deployments/nginx/certs/nginx.key`
 - **Création des utilisateurs**
 
-Le script **src/generate_userdb.py** initialise un dictionnaire users contenant les utilisateurs et leurs mots de passe hachés avec Argon2 :
+### 2) Initialisation du Projet
 
-```json
-users = {
-    "admin": pwd_context.hash("XXXXX")  # remplace "XXXXX" par le mot de passe souhaité
-}
-```
+A la première utilisation, lancez l'initialisation complète :
 
-- Clé : nom d’utilisateur
-- Valeur : mot de passe haché avec Argon2
-
-**Important** : après avoir renseigné le mot de passe de l’utilisateur, lancer la commande :
 ```bash
-make user-init
+make init
 ```
-Cette commande exécute le script et crée le fichier users_db.json avec les mots de passe hachés, prêt à être utilisé par l’application.
 
-- **Clé API météo (OpenWeather)**
-   `OPENWEATHER_API_KEY="......"` - (/.env)
+Cette commande configure automatiquement :
+- Les répertoires de base (`data/`, `models/`, `logs/`, `metrics/`)
+- Le fichier `.env` avec les variables d'environnement nécessaires
+- Les permissions Airflow sur systèmes Linux/WSL
+- La base de données utilisateurs (`users_db.json`)
+
+Le script détecte votre système et applique les configurations appropriées (Linux natif, WSL2, macOS).
+
+**Note** : Lors de la première exécution, vous devrez créer un utilisateur administrateur en fournissant un nom d'utilisateur et un mot de passe.
+
+
 
 ## Démarrage Rapide
-### 0) Configuration `.env`
 
-Créer un fichier `.env` à la racine du projet :
-```bash
-OPENWEATHER_API_KEY="..."
-HOST_PROJECT_ROOT=/chemin/absolu/vers/SEP25-BMLE-MLOPS-ACCIDENTS
-```
 
-`HOST_PROJECT_ROOT` est le chemin absolu du projet sur la machine hôte, nécessaire aux montages Docker/Airflow.
 
 ### 1) Permissions Docker (WSL)
 
@@ -76,7 +69,10 @@ sudo chmod 666 /var/run/docker.sock
 ### Installation
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+# Linux/macOS
+source .venv/bin/activate
+# Windows (PowerShell)
+# .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
@@ -107,6 +103,7 @@ python src/pipeline/05_data_transformation/main.py
 python src/pipeline/06_resampling/main.py
 python src/pipeline/07_model_trainer/main.py
 python src/pipeline/08_model_evaluation/main.py
+python src/pipeline/09_shap_explicability/main.py
 ```
 
 ### Tests unitaires
@@ -195,6 +192,7 @@ Artefacts requis (configures dans `config.yaml`) :
 - `models/best_model.joblib`
 - `models/features.joblib`
 - `models/one_hot_encoder.joblib`
+- `models/shap_explainer.joblib`
 
 ## API S.A.V.E.R. (saver_app)
 
@@ -231,13 +229,15 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
 ```json
 {
   "status": "success",
+  "top_k": 5,
   "data": [
     {
       "commune": "Bassens",
       "adresse": "avenue de la république",
       "facteurs": "...",
       "prediction": 61.2345,
-      "stabilite": "➡️ Stable"
+      "risk_level": 6,
+      "risk_label": "MODÉRÉ"
     }
   ]
 }
@@ -251,7 +251,7 @@ L'interface web `saver_app.html` est servie à la racine via Nginx et consomme l
   "status": "success",
   "data": [
     {
-      "timestamp": "2026-02-10T22:00:00Z",
+      "timestamp": 1770760800,
       "risk_index": 42.1,
       "risk_level": 3,
       "risk_label": "Moderate",
@@ -291,7 +291,8 @@ SEP25-BMLE-MLOPS-ACCIDENTS/
 │   │   ├── 05_data_transformation
 │   │   ├── 06_resampling
 │   │   ├── 07_model_trainer
-│   │   ├─── 08_model_evaluation
+│   │   ├── 08_model_evaluation
+│   │   ├── 09_shap_explicability
 │   │   └── dags
 │   │       └── pipeline_dag.py    # Airflow dags
 │   ├── api/                       # API FastAPI

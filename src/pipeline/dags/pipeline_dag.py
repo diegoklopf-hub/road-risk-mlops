@@ -1,8 +1,8 @@
-from pathlib import Path
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.providers.docker.operators.docker import DockerOperator
 import os
+from datetime import timedelta
 
 PROJECT_ROOT_ON_HOST = os.environ['HOST_PROJECT_ROOT']
 
@@ -14,7 +14,8 @@ images_list = [
     'pipeline-05_data_transformation:latest',
     'pipeline-06_resampling:latest',
     'pipeline-07_model_trainer:latest',
-    'pipeline-08_model_evaluation:latest'
+    'pipeline-08_model_evaluation:latest',
+    'pipeline-09_shap_explicability:latest'
 ]
 
 
@@ -68,6 +69,11 @@ with DAG(
         auto_remove=True,
         mounts=SHARED_MOUNTS,
         environment=SHARED_ENV,
+        mount_tmp_dir=False,
+        tty=True,
+        docker_url="unix://var/run/docker.sock",
+        force_pull=False,
+        execution_timeout=timedelta(hours=3),
     ) for img in images_list]
 
     clean_parent_run >> task_list[0]

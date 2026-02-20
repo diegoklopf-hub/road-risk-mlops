@@ -11,6 +11,7 @@ STEPS=(
   "06_resampling"
   "07_model_trainer"
   "08_model_evaluation"
+  "09_shap_explicability"
 )
 
 for step in "${STEPS[@]}"; do

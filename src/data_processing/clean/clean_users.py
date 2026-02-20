@@ -77,6 +77,6 @@ def clean_usagers(df,out_path):
 
     # Save cleaned file
     df.to_csv(os.path.join(out_path, "usagers.csv"), index=False)
-    print("    -> Cleaned 'usagers' data saved to:", os.path.join(out_path, "usagers.csv"))
+    logger.info("Cleaned 'usagers' data saved to: %s", os.path.join(out_path, "usagers.csv"))
 
     return df

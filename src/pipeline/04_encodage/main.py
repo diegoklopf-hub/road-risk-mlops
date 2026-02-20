@@ -30,9 +30,10 @@ class DataEncodagePipeline:
         data_encodage = DataEncodage(config=cfg)
 
         data_encodage.encode_cyclic_values()
-        data_encodage.encode_categorical_values()
+        encoder = data_encodage.encode_categorical_values()
         data_encodage.encode_continue_score_grav()
         data_encodage.validate_data_and_export()
+        return encoder
 
     def main(self):
 
@@ -47,11 +48,18 @@ class DataEncodagePipeline:
                 mlflow.log_param("step", "04_encodage")
 
                 start = time.time()
-                self.run()
+                encoder = self.run()
                 duration = time.time() - start
 
                 mlflow.log_metric("duration_sec", duration)
                 mlflow.log_param("status", "completed")
+
+                # 🔥 log model in this nested run
+                mlflow.sklearn.log_model(
+                    sk_model=encoder,
+                    artifact_path="model_encoder",
+                    registered_model_name="one_hot_encoder_accident_model"
+                )
 
         except Exception as e:
             mlflow.log_param("status", "failed")

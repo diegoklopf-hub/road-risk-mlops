@@ -106,7 +106,7 @@ def format_log_message(cluster_id, code_set,eqt_obligatoires):
             desc = equipement_dict.get(code_int, "Inconnu")
             descriptions.append(f"{code_str} ({desc})")
         except ValueError:
-            # Cas où le code n'est pas un chiffre
+            # Case where code is not numeric
             descriptions.append(f"{code_str} (? Val invalide)")
             
     return f"{c_name} => [{', '.join(descriptions)}] Equipements obligatoires: {eqt_obligatoires}]"
@@ -131,7 +131,7 @@ def user_safety_score(row):
         return np.nan
 
     if isinstance(secu_val, (int, float)) and not isinstance(secu_val, bool):
-        secu_str = str(int(secu_val))   # ex : 18.0 -> '18'
+        secu_str = str(int(secu_val))   # e.g.: 18.0 -> '18'
     else:
         secu_str = str(secu_val)
 

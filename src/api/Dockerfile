@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Prevent Python from creating .pyc files
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -28,9 +28,9 @@ COPY src/__init__.py /app/src/__init__.py
 COPY src/common_utils.py /app/src/common_utils.py
 COPY src/custom_logger.py /app/src/custom_logger.py
 COPY src/config.yaml /app/src/config.yaml
-
-# Copy model artifacts (read-only on API side)
-COPY models /models
+COPY src/data_processing/schema_manager.py /app/src/data_processing/schema_manager.py
+COPY src/data_processing/schema.yaml /app/src/data_processing/schema.yaml
+COPY src/config.py /app/src/config.py
 
 # Expose internal port
 EXPOSE 8000

@@ -144,8 +144,8 @@ class DataMerge:
                          at the user level, including aggregated severity counts per accident.
         """
 
-        print("""------------- 01 Starting data merging -------------""")
-        logger.info("Merge multiple accident-related datasets by user (usager)")
+        logger.info("-------------  Starting data merge by user-level records -------------")
+        logger.info("Merging cleaned datasets: caracteristiques, lieux, vehicules, usagers")
         if os.path.exists(self.config.out_merged_data_relative_path) == False:
             os.makedirs(self.config.out_merged_data_relative_path)
 
@@ -181,7 +181,6 @@ class DataMerge:
         self.df = self.df.drop('catu', axis=1)
         self.columns_aggregated.remove('catu')
         msg = f"Drop the column {['catu']}"
-        print(msg)
         logger.info(msg)
 
         # Add 4 columns counting each severity category per accident
@@ -197,8 +196,8 @@ class DataMerge:
         self.df = self.df.merge(counts, on="Num_Acc", how="left")
         del counts
 
-        print("Removing rows with NA: total NA count=", self.df.isna().sum().sum())
-        print("NA per column:", self.df.isna().sum()[self.df.isna().sum() > 0])
+        logger.info("Removing rows with NA: total NA count=%s", self.df.isna().sum().sum())
+        logger.info("NA per column: %s", self.df.isna().sum()[self.df.isna().sum() > 0])
         self.df = self.df.dropna()
         self.columns_not_aggregated.extend(grav_mapping.values())
         self.columns_aggregated.remove('grav')
@@ -206,7 +205,7 @@ class DataMerge:
         # Create an extra cluster for pedestrians where place == 10
         self.df.loc[self.df.place == 10, 'catv_cluster'] = 8
 
-        logger.info('csv merged by usager successfully')
+        logger.info("User-level merged dataset built successfully")
 
         return self.df
 
@@ -222,16 +221,15 @@ class DataMerge:
             The dataframe with the new 'securite_usager' feature and 'secu_merged' column removed.
         """
 
-        print("""------------- 02 Starting feature engineering -------------""")
-        logger.info("Perform feature engineering on the dataframe")
+        logger.info("------------- Starting feature engineering -------------")
+        logger.info("Computing engineered features on merged dataframe")
         self.df["securite_usager"] = self.df.apply(user_safety_score, axis=1)
         self.df = self.df.drop(columns=["secu_merged"])
         self.columns_aggregated.remove('secu_merged')
         self.columns_aggregated.extend(['securite_usager'])
         msg = "Drop the column ['secu_merged']"
-        print(msg)
         logger.info(msg)
-        logger.info('feature engineering completed successfully')
+        logger.info("Feature engineering completed successfully")
         return self.df
 
     def merge_by_accident(self):
@@ -242,7 +240,7 @@ class DataMerge:
         2. Aggregates accident features using the configured aggregation method
         3. Merges aggregated data with non-aggregated columns on 'Num_Acc'
         """
-        print("""------------- 03 Starting data merge by accident -------------""")
+        logger.info("------------- Starting aggregation by accident -------------")
         logger.info("Merge and aggregate data by accident identifier")
 
         # Remove unnecessary columns from the list of columns to aggregate
@@ -256,7 +254,7 @@ class DataMerge:
         unique_not_aggregated_cols = list(set(self.columns_not_aggregated))
         self.df = acc_agg.merge(self.df[unique_not_aggregated_cols], on='Num_Acc', how='left')
         self.df = self.df.drop_duplicates(subset=['Num_Acc'])
-        logger.info('data aggregated by accident successfully')
+        logger.info("Data aggregated by accident successfully")
 
 
     def validate_data_and_export(self):

@@ -21,7 +21,7 @@ BASE_URL = "https://127.0.0.1"
 
 def test_health_check():
     response = requests.get(
-        f"{BASE_URL}/api/v1/health",
+        f"{BASE_URL}/api/health",
         auth=HTTPBasicAuth("admin", "password"),
         verify=False,
     )
@@ -29,7 +29,7 @@ def test_health_check():
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["model_loaded"] is True
-    assert payload["n_features"] == len(api_main.feature_names)
+    assert payload["n_features"] == len(api_main.load_feature_names())
 
 
 def test_predict_v1_missing_features():
@@ -44,7 +44,7 @@ def test_predict_v1_missing_features():
 
 
 def test_predict_v1_success():
-    features = {name: 0 for name in api_main.feature_names}
+    features = {name: 0 for name in api_main.load_feature_names()}
     response = requests.post(
         f"{BASE_URL}/api/v1/predict",
         json={"features": features},

@@ -15,7 +15,8 @@ STEPS = [
     "05_data_transformation",
     "06_resampling",
     "07_model_trainer",
-    "08_model_evaluation"
+    "08_model_evaluation",
+    "09_shap_explicability"
 ]
 
 parser = argparse.ArgumentParser()

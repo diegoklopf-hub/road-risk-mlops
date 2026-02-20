@@ -1,17 +1,37 @@
 import json
+import sys
 from passlib.context import CryptContext
 from pathlib import Path
+from src.custom_logger import logger
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+def initialize_user_db():
+    if len(sys.argv) < 3:
+        logger.error("Erreur : Nom d'utilisateur ou mot de passe manquant.")
+        sys.exit(1)
 
-# Plain-text passwords for initialization (dev/test)
-users = {
-    "admin": pwd_context.hash("XXXXX")
-}
+    username = sys.argv[1]
+    password = sys.argv[2]
 
-# Save to a JSON file
-Path("./data/secrets").mkdir(exist_ok=True)
-with open("./data/secrets/users_db.json", "w") as f:
-    json.dump(users, f, indent=4)
+    pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-print("users_db.json initialization completed!")
+    # Load existing users if the file exists
+    secrets_path = Path("./data/secrets")
+    secrets_path.mkdir(parents=True, exist_ok=True)
+    file_path = secrets_path / "users_db.json"
+
+    users = {}
+    if file_path.exists():
+        with open(file_path, "r") as f:
+            users = json.load(f)
+
+    # Add or update the user
+    users[username] = pwd_context.hash(password)
+
+    # Save everything
+    with open(file_path, "w") as f:
+        json.dump(users, f, indent=4)
+
+    logger.info(f"Utilisateur {username} ajouté/mis à jour dans {file_path}")
+
+if __name__ == "__main__":
+    initialize_user_db()

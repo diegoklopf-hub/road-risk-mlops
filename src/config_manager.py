@@ -12,6 +12,7 @@ from src.entity import (
     DataResamplingConfig,
     ModelTrainerConfig,
     ModelEvaluationConfig,
+    ShapExplicabilityConfig,
 )
 
 
@@ -166,3 +167,18 @@ class ConfigurationManager:
             metric_file_name=_to_path(_get(cfg, "metric_file_name")),
             mlflow_uri=_get(cfg, "mlflow_uri"),
         )
+    
+    def get_shap_explicability_config(self) -> ShapExplicabilityConfig:
+        cfg = _get(self.config, "shap_explicability")
+
+        root_dir = _to_path(_get(cfg, "root_dir"))
+        create_directories([root_dir])
+
+        return ShapExplicabilityConfig(
+            root_dir=root_dir,
+            model_path=_to_path(_get(cfg, "model_path")),
+            X_train_path=_to_path(_get(cfg, "X_train_path")),
+            shap_explainer_path=_to_path(_get(cfg, "shap_explainer_path")),
+            sample_size=int(_get(cfg, "sample_size")),
+        )
+
