@@ -21,12 +21,12 @@ api_main.app.dependency_overrides[authenticate] = lambda: True
 
 
 def test_health_check():
-    response = client.get("/api/v1/health")
+    response = client.get("/api/health")
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["model_loaded"] is True
-    assert payload["n_features"] == len(api_main.feature_names)
+    assert payload["n_features"] == len(api_main.load_feature_names())
 
 
 def test_predict_v1_missing_features():
@@ -39,7 +39,7 @@ def test_predict_v1_missing_features():
 
 
 def test_predict_v1_success():
-    features = {name: 0 for name in api_main.feature_names}
+    features = {name: 0 for name in api_main.load_feature_names()}
     response = client.post(
         "/api/v1/predict",
         json={"features": features},
