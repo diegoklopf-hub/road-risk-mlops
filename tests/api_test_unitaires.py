@@ -99,3 +99,27 @@ def test_predict_time_series():
     assert "temperature_c" in first_item
     assert "description" in first_item
     assert "daylight" in first_item
+
+def test_get_roads():
+    response = client.get(
+        "/api/roads",
+    )
+    assert response.status_code == 200
+
+def test_put_roads():
+    response = client.get(
+        "/api/roads",
+    )
+    assert response.status_code == 200
+
+def test_login():
+    response = client.get(
+        "/api/login",
+    )
+    assert response.status_code == 200
+
+def test_metrics():
+    response = client.get(
+        "/api/metrics",
+    )
+    assert response.status_code == 200

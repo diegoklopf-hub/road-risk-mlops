@@ -110,3 +110,26 @@ def test_predict_time_series():
     assert "temperature_c" in first_item
     assert "description" in first_item
     assert "daylight" in first_item
+
+def test_get_roads():
+    response = requests.get(
+        f"{BASE_URL}/api/roads",
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
+    )
+    assert response.status_code == 200
+
+def test_login():
+    response = requests.get(
+        f"{BASE_URL}/api/login",
+        auth=HTTPBasicAuth("admin", "password"),
+        verify=False,
+    )
+    assert response.status_code == 200
+
+def test_metrics():
+    response = requests.get(
+        f"{BASE_URL}/api/metrics",
+        verify=False,
+    )
+    assert response.status_code == 200
