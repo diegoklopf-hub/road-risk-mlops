@@ -133,7 +133,7 @@ class PredictionInputV2(BaseModel):
 @app.get("/api/health")
 def health_check(auth: None = Depends(authenticate)):
     start_time = time.time()
-    endpoint = "/api/login"
+    endpoint = "/api/health"
 
     logger.info(f">>>>> Call /api/health called <<<<<")
  
@@ -162,7 +162,7 @@ def health_check(auth: None = Depends(authenticate)):
         REQUEST_LATENCY.labels("GET", endpoint).observe(
             time.time() - start_time
         )
-    INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 
 
@@ -425,7 +425,7 @@ def get_roads(auth: None = Depends(authenticate)):
         REQUEST_LATENCY.labels("GET", endpoint).observe(
             time.time() - start_time
         )
-    INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 @app.put("/api/roads",
     summary="Met à jour la base de données des routes (infrastructure)",
@@ -483,8 +483,7 @@ def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
         REQUEST_LATENCY.labels("PUT", endpoint).observe(
             time.time() - start_time
         )
-    
-    INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 # -------------------------------------------------------------------
 # Main
@@ -553,7 +552,7 @@ def login(current_user: dict = Depends(authenticate)):
         REQUEST_LATENCY.labels("GET", endpoint).observe(
             time.time() - start_time
         )
-    INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
     
 
 # -------------------------------------------------------------------
