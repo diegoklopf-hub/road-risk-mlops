@@ -166,6 +166,7 @@ class ConfigurationManager:
             model_path=_to_path(_get(cfg, "model_path")),
             metric_file_name=_to_path(_get(cfg, "metric_file_name")),
             mlflow_uri=_get(cfg, "mlflow_uri"),
+            pushgateway_url=_get(cfg, "pushgateway_url"),
         )
     
     def get_shap_explicability_config(self) -> ShapExplicabilityConfig:

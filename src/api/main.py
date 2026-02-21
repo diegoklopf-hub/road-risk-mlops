@@ -132,11 +132,39 @@ class PredictionInputV2(BaseModel):
 
 @app.get("/api/health")
 def health_check(auth: None = Depends(authenticate)):
-    return {
-        "status": "ok",
-        "model_loaded": True,
-        "n_features": len(load_feature_names())
-    }
+    start_time = time.time()
+    endpoint = "/api/health"
+
+    logger.info(f">>>>> Call /api/health called <<<<<")
+ 
+    try:
+        inference_start = time.time()
+        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
+        return {
+            "status": "ok",
+            "model_loaded": True,
+            "n_features": len(load_feature_names())
+        }
+
+    except ValueError as exc:
+        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Login error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("GET", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+
+
 
 
 
@@ -181,6 +209,7 @@ def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):
         missing_features = set(feature_names) - set(input_dict.keys())
         if missing_features:
             REQUEST_COUNT.labels("POST", endpoint, "400").inc()
+            INFERENCE_ERRORS.labels(endpoint).inc()
             raise HTTPException(
                 status_code=400,
                 detail=f"Missing features: {sorted(list(missing_features))}"
@@ -363,15 +392,40 @@ async def risk_timeline(auth: None = Depends(authenticate)):
     tags=["Typologie (Data Management)"]
 )
 def get_roads(auth: None = Depends(authenticate)):
-    logger.info(f">>>>> Call GET /api/roads called <<<<<")
-    load_file_path = path_prefix+API_CFG.road_secteur_path
-    if not Path(load_file_path).exists():
-        load_file_path = path_prefix+API_CFG.road_secteur_path.replace("_current", "_ref")
+    start_time = time.time()
+    endpoint = "/api/roads"
 
-    logger.info(f"Loading roads data from {load_file_path}")
-    df = pd.read_csv(load_file_path, sep=";", encoding="utf-8", dtype=str)
-    logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
-    return df.to_dict(orient="records")
+    try:
+        inference_start = time.time()
+        logger.info(f">>>>> Call GET /api/roads called <<<<<")
+        load_file_path = path_prefix+API_CFG.road_secteur_path
+        if not Path(load_file_path).exists():
+            load_file_path = path_prefix+API_CFG.road_secteur_path.replace("_current", "_ref")
+
+        logger.info(f"Loading roads data from {load_file_path}")
+        df = pd.read_csv(load_file_path, sep=";", encoding="utf-8", dtype=str)
+        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
+        logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
+        
+        return df.to_dict(orient="records")
+
+    except ValueError as exc:
+        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Get Roads failed with error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("GET", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 @app.put("/api/roads",
     summary="Met à jour la base de données des routes (infrastructure)",
@@ -397,12 +451,39 @@ def get_roads(auth: None = Depends(authenticate)):
     tags=["Typologie (Data Management)"]
 )
 def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
+    start_time = time.time()
+    endpoint = "/api/roads"
+
     logger.info(f">>>>> Call PUT /api/roads called <<<<<")
-    df = pd.DataFrame(rows)
-    df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
-    logger.info(f"CSV file {API_CFG.road_secteur_path} updated successfully with {len(rows)} rows.")
-    logger.info(f">>>>> Endpoint PUT /api/roads completed <<<<<\n\nx=======x")
-    return {"status": "ok"}
+    
+    try:
+        inference_start = time.time()
+        df = pd.DataFrame(rows)
+        df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
+
+        logger.info(f"CSV file {API_CFG.road_secteur_path} updated successfully with {len(rows)} rows.")
+        logger.info(f">>>>> Endpoint PUT /api/roads completed <<<<<\n\nx=======x")
+        REQUEST_COUNT.labels("PUT", endpoint, "200").inc()
+        
+        return {"status": "ok"}
+            
+    except ValueError as exc:
+        REQUEST_COUNT.labels("PUT", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("PUT", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Timeline error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("PUT", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 # -------------------------------------------------------------------
 # Main
@@ -445,7 +526,34 @@ def login(current_user: dict = Depends(authenticate)):
     """
     Valide username/password via Basic Auth.
     """
-    return {"status": "authenticated", "user": current_user}
+    start_time = time.time()
+    endpoint = "/api/login"
+
+    logger.info(f">>>>> Call /api/login called <<<<<")
+ 
+    try:
+        inference_start = time.time()
+        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
+        return {"status": "authenticated", "user": current_user}
+
+    except ValueError as exc:
+        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Login error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("GET", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+    
 
 # -------------------------------------------------------------------
 # Endpoint metrics
@@ -463,4 +571,5 @@ def login(current_user: dict = Depends(authenticate)):
     tags=["Monitoring"]
 )
 def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)   
+    

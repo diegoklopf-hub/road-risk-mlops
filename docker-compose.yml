@@ -284,6 +284,15 @@ services:
     ports:
       - "5001:5000"
     restart: unless-stopped
+    
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+    - saver_network
+    restart: unless-stopped
 
   minio-init:
     image: minio/mc

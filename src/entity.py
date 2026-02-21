@@ -95,6 +95,7 @@ class ModelEvaluationConfig:
     model_path: Path
     metric_file_name: Path
     mlflow_uri: Optional[str] = None
+    pushgateway_url: Optional[str] = "pushgateway:9091"
 
 # =========================
 # SHAP EXPLICABILITY

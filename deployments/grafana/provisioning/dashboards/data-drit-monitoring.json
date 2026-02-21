@@ -1,0 +1,447 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "piechart", "name": "Pie chart", "version": "" },
+    { "type": "panel", "id": "bargauge", "name": "Bar gauge", "version": "" }
+  ],
+  "annotations": { "list": [] },
+  "description": "Monitoring des prédictions ML — latence, erreurs, scores, payload",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Aperçu temps réel",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#F2495C", "value": null },
+            { "color": "#FF9830", "value": 0.9 },
+            { "color": "#73BF69", "value": 0.98 }
+          ]},
+          "unit": "percentunit", "min": 0, "max": 1, "decimals": 3
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_total{status=\"success\"}[5m]) / rate(ml_prediction_total[5m])", "instant": true, "legendFormat": "Taux succès", "refId": "A" }],
+      "title": "Taux succès (5m)", "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#73BF69", "value": null },
+            { "color": "#FF9830", "value": 0.5 },
+            { "color": "#F2495C", "value": 1.5 }
+          ]},
+          "unit": "s", "decimals": 3
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_latency_seconds_sum[5m]) / rate(ml_prediction_latency_seconds_count[5m])", "instant": true, "legendFormat": "Latence moy.", "refId": "A" }],
+      "title": "Latence moy. (5m)", "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#73BF69", "value": null },
+            { "color": "#FF9830", "value": 2 },
+            { "color": "#F2495C", "value": 5 }
+          ]},
+          "unit": "short", "decimals": 0
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_errors_total[1h])", "instant": true, "legendFormat": "Erreurs 1h", "refId": "A" }],
+      "title": "Erreurs (1h)", "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#5794F2", "value": null }]},
+          "unit": "short", "decimals": 0
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_total[24h])", "instant": true, "legendFormat": "Total 24h", "refId": "A" }],
+      "title": "Prédictions (24h)", "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#73BF69", "value": null },
+            { "color": "#FF9830", "value": 0.6 },
+            { "color": "#F2495C", "value": 0.85 }
+          ]},
+          "unit": "short", "min": 0, "max": 1, "decimals": 3
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "id": 5,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "ml_top_prediction_score", "instant": true, "legendFormat": "Top score", "refId": "A" }],
+      "title": "Top score prédit", "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#8AB8FF", "value": null }]},
+          "unit": "short", "decimals": 0
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "id": 6,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_payload_cities_count_sum[5m]) / rate(ml_prediction_payload_cities_count_count[5m])", "instant": true, "legendFormat": "Villes moy.", "refId": "A" }],
+      "title": "Villes / requête (5m)", "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Throughput & Latence",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars", "fillOpacity": 80, "lineWidth": 1,
+            "stacking": { "group": "A", "mode": "normal" },
+            "showPoints": "never", "spanNulls": false,
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short", "decimals": 0
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "error" }, "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 6 },
+      "id": 7,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_total{status=\"success\"}[$__interval])", "legendFormat": "success", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_total{status=\"error\"}[$__interval])", "legendFormat": "error", "refId": "B" }
+      ],
+      "title": "Prédictions success / error", "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 12, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 4,
+            "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 },
+            { "color": "red", "value": 2 }
+          ]},
+          "unit": "s", "decimals": 3
+        }
+      },
+      "gridPos": { "h": 7, "w": 10, "x": 8, "y": 6 },
+      "id": 10,
+      "options": {
+        "legend": { "calcs": ["mean", "max", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_latency_seconds_sum[5m]) / rate(ml_prediction_latency_seconds_count[5m])", "legendFormat": "Latence moy.", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.95, rate(ml_prediction_latency_seconds_bucket[5m]))", "legendFormat": "p95", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.99, rate(ml_prediction_latency_seconds_bucket[5m]))", "legendFormat": "p99", "refId": "C" }
+      ],
+      "title": "Latence end-to-end", "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#73BF69", "value": null },
+            { "color": "#FF9830", "value": 1 },
+            { "color": "#F2495C", "value": 2 }
+          ]},
+          "unit": "s", "decimals": 3
+        }
+      },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 6 },
+      "id": 11,
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "showUnfilled": true },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.50, rate(ml_prediction_latency_seconds_bucket[1h]))", "instant": true, "legendFormat": "p50", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.90, rate(ml_prediction_latency_seconds_bucket[1h]))", "instant": true, "legendFormat": "p90", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.95, rate(ml_prediction_latency_seconds_bucket[1h]))", "instant": true, "legendFormat": "p95", "refId": "C" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.99, rate(ml_prediction_latency_seconds_bucket[1h]))", "instant": true, "legendFormat": "p99", "refId": "D" }
+      ],
+      "title": "Percentiles latence (1h)", "type": "bargauge"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 102,
+      "title": "Erreurs & Pipeline",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "unit": "short", "decimals": 0
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Succès" }, "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Erreurs" }, "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 5, "x": 0, "y": 14 },
+      "id": 8,
+      "options": {
+        "displayLabels": ["percent", "name"],
+        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true, "values": ["percent"] },
+        "pieType": "donut", "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_total{status=\"success\"}[24h])", "instant": true, "legendFormat": "Succès", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_total{status=\"error\"}[24h])", "instant": true, "legendFormat": "Erreurs", "refId": "B" }
+      ],
+      "title": "Succès / Erreurs (24h)", "type": "piechart"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "unit": "short", "decimals": 0
+        }
+      },
+      "gridPos": { "h": 7, "w": 5, "x": 5, "y": 14 },
+      "id": 9,
+      "options": {
+        "displayLabels": ["percent", "name"],
+        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true, "values": ["percent"] },
+        "pieType": "donut", "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_errors_total{error_type=\"prepare_data\"}[24h])", "instant": true, "legendFormat": "prepare_data", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_errors_total{error_type=\"make_predictions\"}[24h])", "instant": true, "legendFormat": "make_predictions", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_errors_total{error_type=\"build_top\"}[24h])", "instant": true, "legendFormat": "build_top", "refId": "C" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "increase(ml_prediction_errors_total{error_type=\"unknown\"}[24h])", "instant": true, "legendFormat": "unknown", "refId": "D" }
+      ],
+      "title": "Erreurs par étape (24h)", "type": "piechart"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 10, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 4,
+            "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "s", "decimals": 3
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "prepare_data" }, "properties": [{ "id": "color", "value": { "fixedColor": "#58a6ff", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "make_predictions" }, "properties": [{ "id": "color", "value": { "fixedColor": "#d2a8ff", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "build_top" }, "properties": [{ "id": "color", "value": { "fixedColor": "#3fb950", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 10, "y": 14 },
+      "id": 12,
+      "options": {
+        "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"prepare\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"prepare\"}[5m])", "legendFormat": "prepare_data", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"predict\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"predict\"}[5m])", "legendFormat": "make_predictions", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"build_top\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"build_top\"}[5m])", "legendFormat": "build_top", "refId": "C" }
+      ],
+      "title": "Latence par étape", "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#73BF69", "value": null },
+            { "color": "#FF9830", "value": 0.3 },
+            { "color": "#F2495C", "value": 1.0 }
+          ]},
+          "unit": "s", "decimals": 3
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "prepare_data" }, "properties": [{ "id": "color", "value": { "fixedColor": "#58a6ff", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "make_predictions" }, "properties": [{ "id": "color", "value": { "fixedColor": "#d2a8ff", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "build_top" }, "properties": [{ "id": "color", "value": { "fixedColor": "#3fb950", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 14 },
+      "id": 13,
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "showUnfilled": true },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"prepare\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"prepare\"}[5m])", "instant": true, "legendFormat": "prepare_data", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"predict\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"predict\"}[5m])", "instant": true, "legendFormat": "make_predictions", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_step_latency_seconds_sum{step=\"build_top\"}[5m]) / rate(ml_prediction_step_latency_seconds_count{step=\"build_top\"}[5m])", "instant": true, "legendFormat": "build_top", "refId": "C" }
+      ],
+      "title": "Durée par étape", "type": "bargauge"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+      "id": 103,
+      "title": "Score & Payload",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5,
+            "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "line+area" }
+          },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 0.8 }
+          ]},
+          "unit": "short", "min": 0, "max": 1, "decimals": 3
+        }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 22 },
+      "id": 14,
+      "options": {
+        "legend": { "calcs": ["mean", "max", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "ml_top_prediction_score", "legendFormat": "Top score prédit", "refId": "A" }],
+      "title": "Top prediction score — évolution", "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 4,
+            "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short", "decimals": 0
+        }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 22 },
+      "id": 15,
+      "options": {
+        "legend": { "calcs": ["mean", "max", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "rate(ml_prediction_payload_cities_count_sum[5m]) / rate(ml_prediction_payload_cities_count_count[5m])", "legendFormat": "Villes moy. / req.", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "histogram_quantile(0.95, rate(ml_prediction_payload_cities_count_bucket[5m]))", "legendFormat": "p95 villes", "refId": "B" }
+      ],
+      "title": "Payload (villes / requête)", "type": "timeseries"
+    }
+
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["ml", "prometheus", "prediction", "monitoring"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Data-drift Monitoring",
+  "uid": "ml-prediction-pipeline-v2",
+  "version": 1,
+  "weekStart": ""
+}

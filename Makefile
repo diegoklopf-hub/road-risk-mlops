@@ -104,7 +104,7 @@ int-test-debug:
 #make pipeline            # démarre à l'étape 1
 #make pipeline start=7    # démarre à l'étape 7
 pipeline:
-	python run_pipeline_mlflow.py  --start $(or $(start),1)
+	python3 run_pipeline_mlflow.py  --start $(or $(start),1)
 
 user-init:
 	@read -p "Username: " username; \
@@ -112,4 +112,5 @@ user-init:
 	echo; \
 	python src/generate_userdb.py "$$username" "$$password"
 
-
+gen-traffic-py:
+	python3 tests/gen-traffic.py 

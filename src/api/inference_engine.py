@@ -9,6 +9,59 @@ from feature_weather import encode_meteorological_features
 from feature_encoder import encode_categorical_values
 from prediction import build_shap_factors, build_top_predictions, make_predictions, score_to_risk_level, select_top_predictions
 
+#Imports pour metrics prometheus
+from prometheus_client import Counter, Histogram, Gauge, Summary, start_http_server
+import time
+
+# ─── Métriques Prometheus ───────────────────────────────────────────────────
+
+# Nombre total de prédictions (labels: status=success|error)
+prediction_total = Counter(
+    "ml_prediction_total",
+    "Nombre total d'appels à model_prediction",
+    ["status"]
+)
+
+# Latence de chaque étape du pipeline
+prediction_latency_seconds = Histogram(
+    "ml_prediction_latency_seconds",
+    "Latence end-to-end de model_prediction (secondes)",
+    buckets=[0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
+step_latency_seconds = Histogram(
+    "ml_prediction_step_latency_seconds",
+    "Latence par étape du pipeline de prédiction",
+    ["step"],  # labels: prepare | predict | build_top
+    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5]
+)
+
+# Nombre de villes dans le payload
+payload_cities_count = Histogram(
+    "ml_prediction_payload_cities_count",
+    "Nombre de villes dans chaque payload",
+    buckets=[1, 5, 10, 20, 50, 100, 200]
+)
+
+# Score moyen de la top prédiction
+top_prediction_score = Gauge(
+    "ml_top_prediction_score",
+    "Score de risque de la meilleure prédiction retournée"
+)
+
+# Nombre de top résultats retournés
+top_predictions_returned = Histogram(
+    "ml_top_predictions_returned_count",
+    "Nombre de prédictions dans le top résultat",
+    buckets=[1, 5, 10, 20, 50]
+)
+
+# Erreurs détaillées
+prediction_errors_total = Counter(
+    "ml_prediction_errors_total",
+    "Erreurs par type dans model_prediction",
+    ["error_type"]  # labels: prepare_data | make_predictions | build_top | unknown
+)
 
 def is_docker():
     return os.environ.get('IS_DOCKER', 'false').lower() == 'true'
@@ -86,28 +139,53 @@ def model_prediction(payload,model,feature_names,shap_explainer):
         "timestamp": "2026-03-01T12:00:00Z"
     }
     """
+    start_total = time.time()
 
-    # Prepare data for prediction 
-    df_secteur = prepare_data_for_prediction(payload, feature_names, time_series=False)   
+    try:
+        # Prepare data for prediction 
+        with step_latency_seconds.labels(step="prepare").time():
+            df_secteur = prepare_data_for_prediction(payload, feature_names, time_series=False)   
 
-    # Make predictions
-    predictions = make_predictions(df_secteur, model, feature_names)
+        # Make predictions
+        with step_latency_seconds.labels(step="predict").time():
+            predictions = make_predictions(df_secteur, model, feature_names)
 
-    X_top, y_top = select_top_predictions(df_secteur,predictions, nb_top=DEFAULT_TOP_K)
-    factors = build_shap_factors(X_top, shap_explainer, feature_names, num_explanations=4)
-    
-    # Extract top predictions
-    top_prediction = build_top_predictions(
-        X_top,
-        y_top,
-        secteur=secteur,
-        factors=factors,
-    )
+        # Extract top predictions
+        with step_latency_seconds.labels(step="build_top").time():
+            X_top, y_top = select_top_predictions(df_secteur,predictions, nb_top=DEFAULT_TOP_K)
+            factors = build_shap_factors(X_top, shap_explainer, feature_names, num_explanations=4)
+            top_prediction = build_top_predictions(
+                X_top,
+                y_top,
+                secteur=secteur,
+                factors=factors,
+            )
+        #Métriques sur les résultats
+        if top_prediction:
+            top_predictions_returned.observe(len(top_prediction))
 
-    # Return prediction results
-    logger.info("Prediction completed successfully: %d top record(s)", len(top_prediction))
-    return {"status": "success", "top_k": DEFAULT_TOP_K, "data": top_prediction}
+        # Metrics pour le top item
+        first_score = top_prediction[0].get("prediction")
+        if first_score is not None:
+            top_prediction_score.set(float(first_score))
 
+        # Return prediction results
+        prediction_total.labels(status="success").inc()
+        # Ajouter ici — mesure le nombre de villes dans le payload
+        payload_cities_count.observe(len(payload.get("cities", [])))
+        logger.info("Prediction completed successfully: %d top record(s)", len(top_prediction))
+        return {"status": "success", "top_k": DEFAULT_TOP_K, "data": top_prediction}
+    except Exception as e:
+        # Classifie l'erreur selon l'étape probable
+        error_type = error_classifier(e)
+        prediction_errors_total.labels(error_type=error_type).inc()
+        prediction_total.labels(status="error").inc()
+        logger.error(f"Prediction failed [{error_type}]: {e}")
+        raise
+
+    finally:
+        # Latence totale toujours enregistrée
+        prediction_latency_seconds.observe(time.time() - start_total)
 
 def timeline_prediction(payload,model,feature_names):
 
@@ -142,6 +220,17 @@ def timeline_prediction(payload,model,feature_names):
     }
     logger.info("Timeline prediction completed successfully: %d timestamp(s)", len(timeline_results))
     return result
+    
+def error_classifier(exception: Exception) -> str:
+    """Classifie l'exception pour le label Prometheus."""
+    name = type(exception).__name__.lower()
+    if "prepare" in str(exception).lower() or "keyerror" in name or "valueerror" in name:
+        return "prepare_data"
+    if "predict" in str(exception).lower():
+        return "make_predictions"
+    if "top" in str(exception).lower():
+        return "build_top"
+    return "unknown"
 
 if __name__ == "__main__":
 
