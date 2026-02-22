@@ -75,7 +75,7 @@ class ModelEvaluation:
 
                 (rmse, mae, r2) = self.eval_metrics(y_test, predicted_qualities)
 
-                # Mise à jour des Gauges Prometheus 
+                # Update Prometheus gauges
                 ml_r2.set(r2)
                 ml_rmse.set(rmse)
                 ml_mae.set(mae)
@@ -99,14 +99,14 @@ class ModelEvaluation:
         
         finally:
             ml_evaluation_duration.set(time.time() - eval_start)  
-                        # Push vers Pushgateway
+                        # Push metrics to Pushgateway
             try:
                 push_to_gateway(
                     gateway=self.config.pushgateway_url,  # "localhost:9091"
                     job="model_evaluation",
-                    grouping_key={"pipeline": "accidents"},  # label pour filtrer dans Grafana
+                    grouping_key={"pipeline": "accidents"},  # label used for Grafana filtering
                     registry=registry
                 )
             except Exception as push_err:
-                # Ne pas faire planter le pipeline si Prometheus est down
+                # Do not fail the pipeline if Prometheus is down
                 print(f"[WARNING] Pushgateway push failed: {push_err}")     

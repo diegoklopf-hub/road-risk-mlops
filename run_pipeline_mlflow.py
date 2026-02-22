@@ -20,20 +20,20 @@ STEPS = [
 ]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--start", type=int, default=0, help="Numéro de la premier step [1, 2, 3, ..]")
+parser.add_argument("--start", type=int, default=0, help="Step number to start from [1, 2, 3, ..]")
 args = parser.parse_args()
 
 if args.start == 0:
     args.start = 1
-    print("🚀 Démarrage de la pipeline depuis le début")
+    print("🚀 Starting pipeline from the first step")
 elif args.start < 1 or args.start > len(STEPS):
-    raise ValueError(f"--start doit être entre 1 et {len(STEPS)} : value actuelle {args.start}")
+    raise ValueError(f"--start must be between 1 and {len(STEPS)}: current value is {args.start}")
 
 with mlflow.start_run(run_name="GLOBAL_PIPELINE_RUN") as parent:
 
     parent_id = parent.info.run_id
     print("\n🧠 PARENT RUN:", parent_id)
-    print(f"▶️  Démarrage à l'étape {args.start}: {STEPS[args.start - 1]}\n")
+    print(f"▶️  Starting from step {args.start}: {STEPS[args.start - 1]}\n")
 
     for step in STEPS[args.start-1:]:
         print(f"\n🚀 Running {step}")
@@ -59,4 +59,4 @@ with mlflow.start_run(run_name="GLOBAL_PIPELINE_RUN") as parent:
             f"pipeline-{step}:latest"
         ], check=True)
 
-print("\n🔥 PIPELINE TERMINÉE")
+print("\n🔥 PIPELINE FINISHED")

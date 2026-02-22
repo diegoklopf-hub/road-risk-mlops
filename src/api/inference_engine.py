@@ -9,20 +9,20 @@ from feature_weather import encode_meteorological_features
 from feature_encoder import encode_categorical_values
 from prediction import build_shap_factors, build_top_predictions, make_predictions, score_to_risk_level, select_top_predictions
 
-#Imports pour metrics prometheus
-from prometheus_client import Counter, Histogram, Gauge, Summary, start_http_server
+# Prometheus metrics imports
+from prometheus_client import Counter, Histogram, Gauge
 import time
 
-# ─── Métriques Prometheus ───────────────────────────────────────────────────
+# ─── Prometheus Metrics ───────────────────────────────────────────────────
 
-# Nombre total de prédictions (labels: status=success|error)
+# Total number of predictions (labels: status=success|error)
 prediction_total = Counter(
     "ml_prediction_total",
     "Nombre total d'appels à model_prediction",
     ["status"]
 )
 
-# Latence de chaque étape du pipeline
+# End-to-end pipeline latency
 prediction_latency_seconds = Histogram(
     "ml_prediction_latency_seconds",
     "Latence end-to-end de model_prediction (secondes)",
@@ -36,27 +36,27 @@ step_latency_seconds = Histogram(
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5]
 )
 
-# Nombre de villes dans le payload
+# Number of cities in the payload
 payload_cities_count = Histogram(
     "ml_prediction_payload_cities_count",
     "Nombre de villes dans chaque payload",
     buckets=[1, 5, 10, 20, 50, 100, 200]
 )
 
-# Score moyen de la top prédiction
+# Score of the top prediction
 top_prediction_score = Gauge(
     "ml_top_prediction_score",
     "Score de risque de la meilleure prédiction retournée"
 )
 
-# Nombre de top résultats retournés
+# Number of top results returned
 top_predictions_returned = Histogram(
     "ml_top_predictions_returned_count",
     "Nombre de prédictions dans le top résultat",
     buckets=[1, 5, 10, 20, 50]
 )
 
-# Erreurs détaillées
+# Error details
 prediction_errors_total = Counter(
     "ml_prediction_errors_total",
     "Erreurs par type dans model_prediction",
@@ -160,23 +160,23 @@ def model_prediction(payload,model,feature_names,shap_explainer):
                 secteur=secteur,
                 factors=factors,
             )
-        #Métriques sur les résultats
+        # Metrics on prediction results
         if top_prediction:
             top_predictions_returned.observe(len(top_prediction))
 
-        # Metrics pour le top item
+        # Metrics for the top item
         first_score = top_prediction[0].get("prediction")
         if first_score is not None:
             top_prediction_score.set(float(first_score))
 
         # Return prediction results
         prediction_total.labels(status="success").inc()
-        # Ajouter ici — mesure le nombre de villes dans le payload
+        # Track the number of cities in the payload
         payload_cities_count.observe(len(payload.get("cities", [])))
         logger.info("Prediction completed successfully: %d top record(s)", len(top_prediction))
         return {"status": "success", "top_k": DEFAULT_TOP_K, "data": top_prediction}
     except Exception as e:
-        # Classifie l'erreur selon l'étape probable
+        # Classify the error based on the likely pipeline stage
         error_type = error_classifier(e)
         prediction_errors_total.labels(error_type=error_type).inc()
         prediction_total.labels(status="error").inc()
@@ -184,7 +184,7 @@ def model_prediction(payload,model,feature_names,shap_explainer):
         raise
 
     finally:
-        # Latence totale toujours enregistrée
+        # Always record total latency
         prediction_latency_seconds.observe(time.time() - start_total)
 
 def timeline_prediction(payload,model,feature_names):
@@ -222,7 +222,7 @@ def timeline_prediction(payload,model,feature_names):
     return result
     
 def error_classifier(exception: Exception) -> str:
-    """Classifie l'exception pour le label Prometheus."""
+    """Classify exceptions for the Prometheus label."""
     name = type(exception).__name__.lower()
     if "prepare" in str(exception).lower() or "keyerror" in name or "valueerror" in name:
         return "prepare_data"

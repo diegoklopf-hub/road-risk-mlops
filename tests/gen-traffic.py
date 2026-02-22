@@ -31,7 +31,7 @@ AUTH           = ("admin", "password")
 TOTAL_REQUESTS = 20000
 CONCURRENCY    = 40
 
-# Pool de villes
+# City pool
 CITIES_POOL = [
     "Yvrac", "Ambarès-et-Lagrave", "Lormont", "Bordeaux", "Mérignac",
     "Pessac", "Talence", "Bègles", "Cenon", "Floirac",
@@ -39,7 +39,7 @@ CITIES_POOL = [
     "Blanquefort", "Parempuyre", "Saint-Médard-en-Jalles", "Bassens", "Carbon-Blanc",
 ]
 
-# Exemple features v1 (à adapter à votre modèle)
+# Example v1 features (adapt to your model)
 SAMPLE_FEATURES = {
     "heure": 14, "jour": 3, "mois": 2, "an": 2026,
     "lum": 1, "agg": 1, "int": 1, "atm": 1, "col": 1,
@@ -151,7 +151,7 @@ def print_summary(results: list, global_ms: float):
           f"\033[91mÉchecs : {len(results)-total_ok}\033[0m  |  "
           f"Durée : {global_ms:.0f}ms  |  Débit : {rps:.2f} req/sec")
 
-    # Par endpoint
+    # Per endpoint
     by_ep = defaultdict(list)
     for r in results:
         by_ep[r.endpoint].append(r)

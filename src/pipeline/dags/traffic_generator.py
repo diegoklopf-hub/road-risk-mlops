@@ -1,6 +1,6 @@
 """
 Traffic Generator – S.A.V.E.R. Stress Test
-Utilise requests + ThreadPoolExecutor (pas de dépendance externe à Airflow).
+Uses requests + ThreadPoolExecutor (no external dependency on Airflow).
 """
 from __future__ import annotations
 
@@ -16,16 +16,16 @@ from typing import Optional
 
 import requests
 
-# Désactive les warnings SSL (verify=False)
+# Disable SSL warnings (verify=False)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# ── Config par défaut ───────────────────────────────────────────
+# ── Default config ───────────────────────────────────────────
 DEFAULT_BASE_URL = "https://nginx"
 DEFAULT_AUTH = ("admin", "password")
 DEFAULT_TOTAL_REQUESTS = 20_000
 DEFAULT_CONCURRENCY = 40
 
-# ── Pool de villes ──────────────────────────────────────────────
+# ── City pool ──────────────────────────────────────────────
 CITIES_POOL = [
     "Yvrac", "Ambarès-et-Lagrave", "Lormont", "Bordeaux", "Mérignac",
     "Pessac", "Talence", "Bègles", "Cenon", "Floirac",
@@ -93,7 +93,7 @@ class Result:
         return 200 <= self.status < 300
 
 
-# ── Single request (synchrone) ──────────────────────────────────
+# ── Single request (synchronous) ──────────────────────────────────
 def do_request(
     session: requests.Session,
     req_id: int,

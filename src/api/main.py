@@ -106,7 +106,7 @@ INFERENCE_ERRORS = Counter(
 
 app = FastAPI(
     title="Fast API",
-    description="API de prédiction, timeline des risques, routes et monitoring",
+    description="Prediction API, risk timeline, roads, and monitoring",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -125,12 +125,91 @@ class PredictionInputV2(BaseModel):
     cities: List[str]
     timestamp: str
 
+# -------------------------------------------------------------------
+# Main
+# -------------------------------------------------------------------
+@app.get("/",
+    summary="Retourne la page d'accueil de l'API",
+    description="""
+    **Description détaillée :**
+    Retourne la page HTML d'accueil de l'application API.
 
+    **Réponses possibles :**
+    - 200 : Page HTML servie avec succès.
+    - 500 : Erreur interne lors du chargement du template.
+    """,
+    response_description="Page HTML d'accueil.",
+    tags=["Système/Authentification"]
+)
+def health_check_api(auth: None = Depends(authenticate)):
+    return FileResponse(TEMPLATE_PATH)
+
+# -------------------------------------------------------------------
+# Endpoint Authentication
+# -------------------------------------------------------------------
+@app.get("/api/login",
+    summary="Valide les identifiants Basic Auth",
+    description="""
+    **Description détaillée :**
+    Vérifie les identifiants transmis via l'en-tête Authorization (Basic Auth).
+    Retourne les informations utilisateur si l'authentification est valide.
+
+    **Réponses possibles :**
+    - 200 : Utilisateur authentifié.
+    - 401 : Identifiants invalides ou absents.
+    """,
+    response_description="Statut d'authentification et informations utilisateur.",
+    tags=["Système/Authentification"]
+)
+def login(current_user: dict = Depends(authenticate)):
+    """
+    Valide username/password via Basic Auth.
+    """
+    start_time = time.time()
+    endpoint = "/api/login"
+
+    logger.info(f">>>>> Call /api/login called <<<<<")
+ 
+    try:
+        inference_start = time.time()
+        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
+        return {"status": "authenticated", "user": current_user}
+
+    except ValueError as exc:
+        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Login error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("GET", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+    
 # -------------------------------------------------------------------
 # Health check
 # -------------------------------------------------------------------
 
-@app.get("/api/health")
+@app.get("/api/health",
+    summary="Vérifie l'état de santé de l'API",
+    description="""
+    **Description détaillée :**
+    Vérifie l'état de santé de l'API et retourne des informations sur le modèle chargé.
+
+    **Réponses possibles :**
+    - 200 : API en bonne santé.
+    - 404 : Ressources manquantes.
+    """,
+    response_description="Statut d'authentification et informations utilisateur.",
+    tags=["Monitoring et maintenance"]
+)
 def health_check(auth: None = Depends(authenticate)):
     start_time = time.time()
     endpoint = "/api/health"
@@ -165,13 +244,27 @@ def health_check(auth: None = Depends(authenticate)):
         INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
 
 
+# -------------------------------------------------------------------
+# Endpoint metrics
+# -------------------------------------------------------------------
+@app.get("/api/metrics",
+    summary="Expose les métriques Prometheus",
+    description="""
+    **Description détaillée :**
+    Expose les métriques applicatives au format Prometheus pour la supervision.
 
-
-
+    **Réponses possibles :**
+    - 200 : Métriques retournées avec succès.
+    """,
+    response_description="Flux texte des métriques Prometheus.",
+    tags=["Monitoring et maintenance"]
+)
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)   
+    
 # -------------------------------------------------------------------
 # Prediction endpoint
 # -------------------------------------------------------------------
-
 @app.post("/api/v1/predict",
     summary="Test inférence à partir des features pré traitées",
     description="""
@@ -194,7 +287,7 @@ def health_check(auth: None = Depends(authenticate)):
     - 500 : Erreur interne lors de la prédiction.
     """,
     response_description="Un dictionnaire contenant la prédiction et éventuellement les probabilités.",
-    tags=["Inférence_Sandbox"]
+    tags=["Monitoring et maintenance"]
 )
 def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):    
     start_time = time.time()
@@ -255,6 +348,113 @@ def predict(payload: AccidentFeatures, auth: None = Depends(authenticate)):
         REQUEST_LATENCY.labels("POST", endpoint).observe(
             time.time() - start_time
         )
+@app.get("/api/roads",
+    summary="Charge la base de données des routes (infrastructure)",
+    description="""
+    **Description détaillée :**
+    Retourne la base de données des routes et secteurs utilisée pour les prédictions.
+
+    **Réponses possibles :**
+    - 200 : Liste des routes/secteurs retournée avec succès.
+    - 500 : Erreur interne lors du chargement des données.
+    """,
+    response_description="Liste des routes/secteurs au format JSON.",
+    tags=["Référentiels routiers (données structurelles)"]
+)
+def get_roads(auth: None = Depends(authenticate)):
+    start_time = time.time()
+    endpoint = "/api/roads"
+
+    try:
+        inference_start = time.time()
+        logger.info(f">>>>> Call GET /api/roads called <<<<<")
+        load_file_path = path_prefix+API_CFG.road_secteur_path
+        if not Path(load_file_path).exists():
+            load_file_path = path_prefix+API_CFG.road_secteur_path.replace("_current", "_ref")
+
+        logger.info(f"Loading roads data from {load_file_path}")
+        df = pd.read_csv(load_file_path, sep=";", encoding="utf-8", dtype=str)
+        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
+        logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
+        
+        return df.to_dict(orient="records")
+
+    except ValueError as exc:
+        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Get Roads failed with error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("GET", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+
+@app.put("/api/roads",
+    summary="Met à jour la base de données des routes (infrastructure)",
+    description="""
+    **Description détaillée :**
+    Remplace le contenu du fichier de routes/secteurs par les lignes fournies.
+
+    **Exemple de payload :**
+    ```json
+    [
+      {
+        "nom_voie": "Avenue de la République",
+        "commune": "Bassens"
+      }
+    ]
+    ```
+    **Réponses possibles :**
+    - 200 : Mise à jour effectuée avec succès.
+    - 400 : Données d'entrée invalides.
+    - 500 : Erreur interne lors de l'écriture du fichier.
+    """,
+    response_description="Statut de confirmation de la mise à jour.",
+    tags=["Référentiels routiers (données structurelles)"]
+)
+def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
+    start_time = time.time()
+    endpoint = "/api/roads"
+
+    logger.info(f">>>>> Call PUT /api/roads called <<<<<")
+    
+    try:
+        inference_start = time.time()
+        df = pd.DataFrame(rows)
+        df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
+
+        logger.info(f"CSV file {API_CFG.road_secteur_path} updated successfully with {len(rows)} rows.")
+        logger.info(f">>>>> Endpoint PUT /api/roads completed <<<<<\n\nx=======x")
+        REQUEST_COUNT.labels("PUT", endpoint, "200").inc()
+        
+        return {"status": "ok"}
+            
+    except ValueError as exc:
+        REQUEST_COUNT.labels("PUT", endpoint, "400").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    except Exception as exc:
+        import traceback
+        logger.error(f"traceback error: {traceback.format_exc()}")
+        REQUEST_COUNT.labels("PUT", endpoint, "500").inc()
+        INFERENCE_ERRORS.labels(endpoint).inc()
+        raise HTTPException(status_code=500, detail=f"Update roads error: {exc}")
+    
+    finally:
+        REQUEST_LATENCY.labels("PUT", endpoint).observe(
+            time.time() - start_time
+        )
+        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
+
     
 @app.post("/api/v2/predict",
     summary="Prédire la probabilité d'un accident + explications SHAP",
@@ -378,198 +578,3 @@ async def risk_timeline(auth: None = Depends(authenticate)):
     return timeline_data
 
 
-@app.get("/api/roads",
-    summary="Charge la base de données des routes (infrastructure)",
-    description="""
-    **Description détaillée :**
-    Retourne la base de données des routes et secteurs utilisée pour les prédictions.
-
-    **Réponses possibles :**
-    - 200 : Liste des routes/secteurs retournée avec succès.
-    - 500 : Erreur interne lors du chargement des données.
-    """,
-    response_description="Liste des routes/secteurs au format JSON.",
-    tags=["Typologie (Data Management)"]
-)
-def get_roads(auth: None = Depends(authenticate)):
-    start_time = time.time()
-    endpoint = "/api/roads"
-
-    try:
-        inference_start = time.time()
-        logger.info(f">>>>> Call GET /api/roads called <<<<<")
-        load_file_path = path_prefix+API_CFG.road_secteur_path
-        if not Path(load_file_path).exists():
-            load_file_path = path_prefix+API_CFG.road_secteur_path.replace("_current", "_ref")
-
-        logger.info(f"Loading roads data from {load_file_path}")
-        df = pd.read_csv(load_file_path, sep=";", encoding="utf-8", dtype=str)
-        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
-        logger.info(f">>>>> Endpoint GET /api/roads completed <<<<<\n\nx=======x")
-        
-        return df.to_dict(orient="records")
-
-    except ValueError as exc:
-        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=400, detail=str(exc))
-
-    except Exception as exc:
-        import traceback
-        logger.error(f"traceback error: {traceback.format_exc()}")
-        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=500, detail=f"Get Roads failed with error: {exc}")
-    
-    finally:
-        REQUEST_LATENCY.labels("GET", endpoint).observe(
-            time.time() - start_time
-        )
-        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
-
-@app.put("/api/roads",
-    summary="Met à jour la base de données des routes (infrastructure)",
-    description="""
-    **Description détaillée :**
-    Remplace le contenu du fichier de routes/secteurs par les lignes fournies.
-
-    **Exemple de payload :**
-    ```json
-    [
-      {
-        "nom_voie": "Avenue de la République",
-        "commune": "Bassens"
-      }
-    ]
-    ```
-    **Réponses possibles :**
-    - 200 : Mise à jour effectuée avec succès.
-    - 400 : Données d'entrée invalides.
-    - 500 : Erreur interne lors de l'écriture du fichier.
-    """,
-    response_description="Statut de confirmation de la mise à jour.",
-    tags=["Typologie (Data Management)"]
-)
-def put_roads(rows: list[dict], auth: None = Depends(authenticate)):
-    start_time = time.time()
-    endpoint = "/api/roads"
-
-    logger.info(f">>>>> Call PUT /api/roads called <<<<<")
-    
-    try:
-        inference_start = time.time()
-        df = pd.DataFrame(rows)
-        df.to_csv(path_prefix+API_CFG.road_secteur_path, sep=";", index=False, encoding="utf-8")
-
-        logger.info(f"CSV file {API_CFG.road_secteur_path} updated successfully with {len(rows)} rows.")
-        logger.info(f">>>>> Endpoint PUT /api/roads completed <<<<<\n\nx=======x")
-        REQUEST_COUNT.labels("PUT", endpoint, "200").inc()
-        
-        return {"status": "ok"}
-            
-    except ValueError as exc:
-        REQUEST_COUNT.labels("PUT", endpoint, "400").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=400, detail=str(exc))
-    
-    except Exception as exc:
-        import traceback
-        logger.error(f"traceback error: {traceback.format_exc()}")
-        REQUEST_COUNT.labels("PUT", endpoint, "500").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=500, detail=f"Timeline error: {exc}")
-    
-    finally:
-        REQUEST_LATENCY.labels("PUT", endpoint).observe(
-            time.time() - start_time
-        )
-        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
-
-# -------------------------------------------------------------------
-# Main
-# -------------------------------------------------------------------
-
-@app.get("/",
-    summary="Retourne la page d'accueil de l'API",
-    description="""
-    **Description détaillée :**
-    Retourne la page HTML d'accueil de l'application API.
-
-    **Réponses possibles :**
-    - 200 : Page HTML servie avec succès.
-    - 500 : Erreur interne lors du chargement du template.
-    """,
-    response_description="Page HTML d'accueil.",
-    tags=["Système"]
-)
-def health_check_api(auth: None = Depends(authenticate)):
-    return FileResponse(TEMPLATE_PATH)
-
-# -------------------------------------------------------------------
-# Endpoint Authentication
-# -------------------------------------------------------------------
-@app.get("/api/login",
-    summary="Valide les identifiants Basic Auth",
-    description="""
-    **Description détaillée :**
-    Vérifie les identifiants transmis via l'en-tête Authorization (Basic Auth).
-    Retourne les informations utilisateur si l'authentification est valide.
-
-    **Réponses possibles :**
-    - 200 : Utilisateur authentifié.
-    - 401 : Identifiants invalides ou absents.
-    """,
-    response_description="Statut d'authentification et informations utilisateur.",
-    tags=["Authentification"]
-)
-def login(current_user: dict = Depends(authenticate)):
-    """
-    Valide username/password via Basic Auth.
-    """
-    start_time = time.time()
-    endpoint = "/api/login"
-
-    logger.info(f">>>>> Call /api/login called <<<<<")
- 
-    try:
-        inference_start = time.time()
-        REQUEST_COUNT.labels("GET", endpoint, "200").inc()
-        return {"status": "authenticated", "user": current_user}
-
-    except ValueError as exc:
-        REQUEST_COUNT.labels("GET", endpoint, "400").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=400, detail=str(exc))
-    
-    except Exception as exc:
-        import traceback
-        logger.error(f"traceback error: {traceback.format_exc()}")
-        REQUEST_COUNT.labels("GET", endpoint, "500").inc()
-        INFERENCE_ERRORS.labels(endpoint).inc()
-        raise HTTPException(status_code=500, detail=f"Login error: {exc}")
-    
-    finally:
-        REQUEST_LATENCY.labels("GET", endpoint).observe(
-            time.time() - start_time
-        )
-        INFERENCE_TIME.labels(endpoint).observe(time.time() - inference_start)
-    
-
-# -------------------------------------------------------------------
-# Endpoint metrics
-# -------------------------------------------------------------------
-@app.get("/api/metrics",
-    summary="Expose les métriques Prometheus",
-    description="""
-    **Description détaillée :**
-    Expose les métriques applicatives au format Prometheus pour la supervision.
-
-    **Réponses possibles :**
-    - 200 : Métriques retournées avec succès.
-    """,
-    response_description="Flux texte des métriques Prometheus.",
-    tags=["Monitoring"]
-)
-def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)   
-    

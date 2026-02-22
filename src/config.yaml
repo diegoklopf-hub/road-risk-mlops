@@ -97,13 +97,13 @@ api_inference:
   top_k: 5
   timeline_length: 8
   risk_levels:
-    - { level: 10, threshold: 85, label: "CRITIQUE" }
-    - { level: 9, threshold: 80, label: "TRÈS ÉLEVÉ" }
-    - { level: 8, threshold: 77.5, label: "ÉLEVÉ" }
-    - { level: 7, threshold: 70, label: "SIGNIFICATIF" }
-    - { level: 6, threshold: 55, label: "MODÉRÉ" }
-    - { level: 5, threshold: 40, label: "MOYEN" }
-    - { level: 4, threshold: 30, label: "FAIBLE" }
+    - { level: 10, threshold: 90, label: "CRITIQUE" }
+    - { level: 9, threshold: 86, label: "TRÈS ÉLEVÉ" }
+    - { level: 8, threshold: 82, label: "ÉLEVÉ" }
+    - { level: 7, threshold: 78, label: "SIGNIFICATIF" }
+    - { level: 6, threshold: 75, label: "MODÉRÉ" }
+    - { level: 5, threshold: 72, label: "MOYEN" }
+    - { level: 4, threshold: 50, label: "FAIBLE" }
     - { level: 1, threshold: null, label: "NÉGLIGEABLE" }
   secteur_insee:
     Bassens: 33032

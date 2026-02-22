@@ -6,7 +6,7 @@ from src.custom_logger import logger
 
 def initialize_user_db():
     if len(sys.argv) < 3:
-        logger.error("Erreur : Nom d'utilisateur ou mot de passe manquant.")
+        logger.error("Error: Missing username or password.")
         sys.exit(1)
 
     username = sys.argv[1]
@@ -31,7 +31,7 @@ def initialize_user_db():
     with open(file_path, "w") as f:
         json.dump(users, f, indent=4)
 
-    logger.info(f"Utilisateur {username} ajouté/mis à jour dans {file_path}")
+    logger.info(f"User {username} added/updated in {file_path}")
 
 if __name__ == "__main__":
     initialize_user_db()
