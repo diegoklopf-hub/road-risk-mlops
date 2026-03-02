@@ -120,6 +120,7 @@ Example inference request:
   "cities": ["Bassens"],
   "timestamp": "2026-02-10T22:00:00Z"
 }
+```
 
 ---
 
