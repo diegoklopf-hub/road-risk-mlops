@@ -213,27 +213,34 @@ Logging validation
 Run tests:
 
 make unit-test
+
 make int-test
 
 ---
 
 ##  📂 Project Structure (Simplified)
+
+
+```bash
 src/
- ├── data_processing/
- ├── modeling/
- ├── pipeline/
- ├── api/
+├── data_processing/
+├── modeling/
+├── pipeline/
+├── api/
 deployments/
- ├── mlflow/
- ├── prometheus/
- ├── grafana/
- └── nginx/
+├── mlflow/
+├── prometheus/
+├── grafana/
+└── nginx/
 docker-compose.yml
+
+```
 
 ---
 
 ##  ⚙️  How to Run
 make init
+
 make start-project
 
 Stop:
