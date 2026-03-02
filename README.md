@@ -113,7 +113,6 @@ Fail-fast startup if artifacts are missing.
 - UTC-safe timestamp handling
 - Feature engineering at inference time
 
-```markdown
 Example inference request:
 
 ```json
@@ -121,7 +120,6 @@ Example inference request:
   "cities": ["Bassens"],
   "timestamp": "2026-02-10T22:00:00Z"
 }
-
 
 ---
 
