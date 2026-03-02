@@ -121,6 +121,8 @@ Example inference request:
   "timestamp": "2026-02-10T22:00:00Z"
 }
 
+<\> Code
+
 ---
 
 ## ✅ Monitoring & Observability
