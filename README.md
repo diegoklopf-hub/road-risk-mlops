@@ -121,6 +121,8 @@ Example inference request:
   "timestamp": "2026-02-10T22:00:00Z"
 }
 
+---
+
 ## ✅ Monitoring & Observability
 
 Centralized logging
@@ -134,6 +136,8 @@ Structured logs for debugging
 API health endpoint
 
 Designed with scalability and production monitoring in mind.
+
+---
 
 ##🧠 Business Impact
 
@@ -150,6 +154,8 @@ Evidence-based planning
 It demonstrates the ability to bridge:
 
 Data Engineering → Machine Learning → DevOps → Production Deployment
+
+---
 
 ##  🛠 Tech Stack
 
@@ -191,6 +197,8 @@ Prometheus
 
 Grafana
 
+---
+
 ##  🔍 Testing Strategy
 
 Unit tests (API & components)
@@ -206,6 +214,8 @@ Run tests:
 make unit-test
 make int-test
 
+---
+
 ##  📂 Project Structure (Simplified)
 src/
  ├── data_processing/
@@ -219,6 +229,8 @@ deployments/
  └── nginx/
 docker-compose.yml
 
+---
+
 ##  ⚙️  How to Run
 make init
 make start-project
@@ -226,6 +238,8 @@ make start-project
 Stop:
 
 make stop-project
+
+---
 
 ##  📌 What This Project Demonstrates
 
